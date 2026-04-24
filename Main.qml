@@ -1,8 +1,15 @@
 import QtQuick
+import QtQuick.Controls
 
-Window {
+ApplicationWindow {
     width: 640
     height: 480
     visible: true
-    title: qsTr("Hello World")
+    title: "MediCore HMS"
+
+    StackView {
+        id: stack
+        anchors.fill: parent
+        initialItem: LoginPage {}
+    }
 }
