@@ -15,8 +15,53 @@ qt_add_executable(apphms
 qt_add_qml_module(apphms
     URI hms
     QML_FILES
+        # Main files
         qml/Main.qml
-        qml/LoginPage.qml
+
+        # Screen files
+        qml/screens/LoginScreen.qml
+        qml/screens/PatientDashboard.qml
+        qml/screens/DoctorDashboard.qml
+        qml/screens/AdminDashboard.qml
+
+        # Component files
+        qml/components/Button.qml
+        qml/components/TextField.qml
+        qml/components/PasswordField.qml
+        qml/components/DatePicker.qml
+        qml/components/TimeSlotPicker.qml
+        qml/components/Dropdown.qml
+        qml/components/TableView.qml
+        qml/components/AlertDialog.qml
+        qml/components/LoadingSpinner.qml
+
+        # Patient module files
+        qml/patient/BookAppointmentScreen.qml
+        qml/patient/CancelAppointmentScreen.qml
+        qml/patient/ViewAppointmentsScreen.qml
+        qml/patient/ViewMedicalRecordsScreen.qml
+        qml/patient/ViewBillsScreen.qml
+        qml/patient/PayBillScreen.qml
+        qml/patient/TopUpBalanceScreen.qml
+
+        # Doctor module files
+        qml/doctor/ViewTodaysAppointmentsScreen.qml
+        qml/doctor/MarkAppointmentCompleteScreen.qml
+        qml/doctor/MarkAppointmentNoShowScreen.qml
+        qml/doctor/WritePrescriptionScreen.qml
+        qml/doctor/ViewPatientMedicalHistoryScreen.qml
+
+        # Admin module files
+        qml/admin/AddDoctorScreen.qml
+        qml/admin/RemoveDoctorScreen.qml
+        qml/admin/ViewAllPatientsScreen.qml
+        qml/admin/ViewAllDoctorsScreen.qml
+        qml/admin/ViewAllAppointmentsScreen.qml
+        qml/admin/ViewUnpaidBillsScreen.qml
+        qml/admin/DischargePatientScreen.qml
+        qml/admin/ViewSecurityLogScreen.qml
+        qml/admin/GenerateDailyReportScreen.qml
+
 )
 
 qt_add_resources(QML_RESOURCES
