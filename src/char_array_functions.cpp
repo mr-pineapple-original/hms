@@ -4,8 +4,10 @@
 
 #include<iostream>
 #pragma once
+
 static const long CLEAR_BUFFER = 10000000;
 static const int DEFAULT_SIZE_CHAR_ARRAY = 100;
+
 template <typename T>
 void resize_array(T* &ptr_arr, int size, int new_size)
 {
@@ -65,54 +67,55 @@ void safe_get_line(char* &ptr_arr)
 
 }
 
-// void Beyblade::set_name()
-// {
-//     int default_size = 100;
-//     int size = default_size;
-//     cout << "\n Enter the name of the healthbot:\n";
+template <typename T>
+void copy_array(T* &ptr_arr, const T* ptr_arr_src, int size)
+{
 
-//     if(m_ptr_name != nullptr)
-//     {
-//         delete[] m_ptr_name;
-//     }
+    if(ptr_arr != nullptr)
+    delete[] ptr_arr;
 
-//     m_ptr_name = new char[default_size];
-//     while(true)
-//     {
-//     cin.clear();    
-//     cin.getline(m_ptr_name, default_size);
-//     if(*m_ptr_name == '\0')
-//     {
-//         cout << "\n Name cannot be empty, please enter again:\n";
-//         continue;
-//     }
+    ptr_arr = new T[size];
 
-//     else
-//     {
-//         break;
-//     }
+    for(int i = 0; i < size; i++)
+    {
+        *(ptr_arr + i) = *(ptr_arr_src + i);
+        
+        if(*(ptr_arr_src + i) == '\0')
+        {
+            *(ptr_arr + i) = '\0';
+            break;
+        }    
+    }
 
-//     }
+}
 
-//     while(true)
-//     {
+int get_char_arr_size(const char* ptr_arr)
+{
+    int length = 0;
+    for(int i = 0; *(ptr_arr + i) != '\0'; i++)
+    {
+        length++;
+    }
 
-//     if(cin.fail())
-// 	{
-//         cin.clear();
-//         cin.ignore(CLEAR_BUFFER,'\n');
-//         resize_array(m_ptr_name, size*2, size);
-//         size = size*2;
-//         cout << "\n Please let us use strings :(";
-//         cout << "\n Sorry the name is too long, please enter again:\n";
-//         cin.getline(m_ptr_name,size);
-//         continue;
-// 	}
+    return length;
+}
 
-//     else
-//     {
-//         break;
-//     }
-//     }
+void add_null_character_in_array(char* &ptr_arr)
+{
+    int size = sizeof(ptr_arr) / sizeof(char);
+    bool flag;
+    for(int i = 0; i < size; i ++)
+    {
+        if(*(ptr_arr + i) == ' \0')
+        {
+            flag = true;
+            break;
+        }
+    }
 
-// }
+    if(flag == true)
+    {
+        resize_array(ptr_arr, size, size + 1);
+        *(ptr_arr + size - 1) = '\0';
+    }
+}
