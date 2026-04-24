@@ -43,11 +43,19 @@ ApplicationWindow {
 
     Component {
         id: doctorDashboard
-        Screens.DoctorDashboard { }
+        Screens.DoctorDashboard {
+            onLogout: {
+                stackView.pop()
+            }
+        }
     }
 
     Component {
         id: adminDashboard
-        Screens.AdminDashboard { }
+        Screens.AdminDashboard {
+            onLogout: {
+                stackView.pop()
+            }
+        }
     }
 }
