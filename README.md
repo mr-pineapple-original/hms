@@ -1,18 +1,15 @@
 # MediCore Hospital Management System
 
-A comprehensive Hospital Management System built with C++ and Qt6/QML. The system manages patients, doctors, appointments, prescriptions, billing, and administrative functions with persistent data storage.
+Enter cool description here
+
+
 
 ## Features
 
-- **Patient Portal**: Book/cancel appointments, view medical records, pay bills, top up balance
-- **Doctor Portal**: View today's appointments, mark completions, write prescriptions, view patient history
-- **Admin Panel**: Manage doctors, view all records, unpaid bills, discharge patients, security logs, daily reports
-- **Data Persistence**: All data stored in CSV files and survives program restarts
-- **Secure Authentication**: Role-based login with failed attempt tracking
+As told in pdf :3
 
 ## GitHub Repository
-
-**[https://github.com/yourusername/hospital-management-system](https://github.com/mr-pineapple-original/hms)**
+https://github.com/mr-pineapple-original/hms
 
 ## Prerequisites
 
@@ -23,6 +20,9 @@ A comprehensive Hospital Management System built with C++ and Qt6/QML. The syste
 ## Installation
 
 ### Linux
+
+I love linux so here are the commands for the most common distros:
+
 
 #### Fedora (dnf)
 ```bash
@@ -37,15 +37,22 @@ sudo apt install qt6-base-dev qt6-declarative-dev cmake g++
 
 #### Arch (pacman)
 ```bash
+sudo pacman -Syu
 sudo pacman -S qt6-base qt6-declarative cmake base-devel
 ```
+
+Optional:
+```bash
+sudo pacman -S qtcreator
+```
+
 
 
 #### Windows
 
 > [!TIP]
 >
-> Don't use windows, linux is better - not an opinion, it is a fact. ~
+> Don't use windows, linux is better - not an opinion, it is a fact. 
 
 
 ##### Prerequisites
