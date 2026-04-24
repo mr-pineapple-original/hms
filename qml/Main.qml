@@ -34,7 +34,11 @@ ApplicationWindow {
 
     Component {
         id: patientDashboard
-        Screens.PatientDashboard { }
+        Screens.PatientDashboard {
+            onLogout: {
+                stackView.pop()
+            }
+        }
     }
 
     Component {
