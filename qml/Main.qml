@@ -31,12 +31,15 @@ ApplicationWindow {
             onLoginSuccessToDashboard: function(role, userId) {
                 console.log("Login success:", role, userId)
 
+                // Convert userId to integer
+                var userIdInt = parseInt(userId)
+
                 if (role === "Patient") {
-                    stackView.push(patientDashboardComponent, { userId: userId })
+                    stackView.push(patientDashboardComponent, { userId: userIdInt })
                 } else if (role === "Doctor") {
-                    stackView.push(doctorDashboardComponent, { userId: userId })
+                    stackView.push(doctorDashboardComponent, { userId: userIdInt })
                 } else if (role === "Admin") {
-                    stackView.push(adminDashboardComponent, { userId: userId })
+                    stackView.push(adminDashboardComponent, { userId: userIdInt })
                 }
             }
         }
