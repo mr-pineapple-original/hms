@@ -1,26 +1,33 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import "../components" as Components
+import "../admin" as Admin
 
 Rectangle {
     id: adminDashboard
     width: parent.width
     height: parent.height
-    color: "#ecf0f1"
+
+    // Access theme from main window
+    property var theme: mainWindow ? mainWindow.globalTheme : null
 
     property int userId: 0
     property string adminName: "Admin"
 
     signal logout()
 
+    // Use theme colors
+    color: theme ? theme.background : "#ecf0f1"
+
     // Main content
     Rectangle {
-        width: 800
-        height: 650
+        width: 500
+        height: 600
         anchors.centerIn: parent
-        color: "white"
-        radius: 10
-        border.color: "#bdc3c7"
+        color: theme ? theme.card : "white"
+        radius: theme ? theme.radiusLarge : 10
+        border.color: theme ? theme.border : "#bdc3c7"
         border.width: 1
 
         ColumnLayout {
@@ -30,213 +37,138 @@ Rectangle {
 
             Text {
                 text: "Admin Panel — MediCore"
-                font.pixelSize: 20
+                font.pixelSize: theme ? theme.fontSizeTitle : 20
                 font.bold: true
-                color: "#2c3e50"
+                color: theme ? theme.text : "#2c3e50"
                 Layout.fillWidth: true
                 horizontalAlignment: Text.AlignHCenter
+            }
+
+            Text {
+                text: "Welcome, " + adminName
+                font.pixelSize: theme ? theme.fontSizeLarge : 16
+                color: theme ? theme.primary : "#3498db"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                visible: adminName !== "Admin"
             }
 
             Rectangle {
                 width: parent.width
                 height: 2
-                color: "#3498db"
+                color: theme ? theme.primary : "#3498db"
                 Layout.fillWidth: true
                 Layout.topMargin: 5
                 Layout.bottomMargin: 10
             }
 
-            ColumnLayout {
-                spacing: 10
+            ScrollView {
                 Layout.fillWidth: true
-                Layout.alignment: Qt.AlignHCenter
+                Layout.fillHeight: true
+                clip: true
 
-                Button {
-                    text: "1. Add Doctor"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
-                    }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(addDoctorScreen)
-                    }
-                }
+                ColumnLayout {
+                    spacing: 10
+                    width: parent.width - 20
 
-                Button {
-                    text: "2. Remove Doctor"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "1. Add Doctor"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(addDoctorScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(removeDoctorScreen)
-                    }
-                }
 
-                Button {
-                    text: "3. View All Patients"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "2. Remove Doctor"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(removeDoctorScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(viewAllPatientsScreen)
-                    }
-                }
 
-                Button {
-                    text: "4. View All Doctors"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "3. View All Patients"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(viewAllPatientsScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(viewAllDoctorsScreen)
-                    }
-                }
 
-                Button {
-                    text: "5. View All Appointments"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "4. View All Doctors"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(viewAllDoctorsScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(viewAllAppointmentsScreen)
-                    }
-                }
 
-                Button {
-                    text: "6. View Unpaid Bills"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "5. View All Appointments"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(viewAllAppointmentsScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(viewUnpaidBillsScreen)
-                    }
-                }
 
-                Button {
-                    text: "7. Discharge Patient"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "6. View Unpaid Bills"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(viewUnpaidBillsScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(dischargePatientScreen)
-                    }
-                }
 
-                Button {
-                    text: "8. View Security Log"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "7. Discharge Patient"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(dischargePatientScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(viewSecurityLogScreen)
-                    }
-                }
 
-                Button {
-                    text: "9. Generate Daily Report"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#2980b9" : (parent.hovered ? "#5dade2" : "#3498db")
+                    Components.StyledButton {
+                        text: "8. View Security Log"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(viewSecurityLogScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    onClicked: {
-                        stackView.push(generateDailyReportScreen)
-                    }
-                }
 
-                Button {
-                    text: "10. Logout"
-                    Layout.fillWidth: true
-                    height: 45
-                    background: Rectangle {
-                        radius: 5
-                        color: parent.down ? "#922b21" : (parent.hovered ? "#cb4335" : "#e74c3c")
+                    Components.StyledButton {
+                        text: "9. Generate Daily Report"
+                        Layout.fillWidth: true
+                        onClicked: {
+                            stackView.push(generateDailyReportScreen)
+                            stackView.visible = true
+                            adminDashboard.visible = false
+                        }
                     }
-                    contentItem: Text {
-                        text: parent.text
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
+
+                    Components.StyledButton {
+                        text: "10. Logout"
+                        Layout.fillWidth: true
+                        normalColor: theme ? theme.danger : "#e74c3c"
+                        hoverColor: theme ? theme.dangerHover : "#c0392b"
+                        pressedColor: theme ? theme.dangerPressed : "#a93226"
+                        onClicked: logout()
                     }
-                    onClicked: logout()
                 }
             }
         }
@@ -246,80 +178,95 @@ Rectangle {
     StackView {
         id: stackView
         anchors.fill: parent
-        initialItem: null
-        visible: false
+
+        // Handle when we pop back to this view
+        onCurrentItemChanged: {
+            if (stackView.depth === 0) {
+                stackView.visible = false
+                adminDashboard.visible = true
+            }
+        }
     }
 
-    // Placeholder components
+    // Screen Components
     Component {
         id: addDoctorScreen
-        Rectangle {
-            color: "white"
-            Text { text: "Add Doctor Screen"; anchors.centerIn: parent }
+        Admin.AddDoctorScreen {
+            onGoBack:  {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: removeDoctorScreen
-        Rectangle {
-            color: "white"
-            Text { text: "Remove Doctor Screen"; anchors.centerIn: parent }
+        Admin.RemoveDoctorScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: viewAllPatientsScreen
-        Rectangle {
-            color: "white"
-            Text { text: "View All Patients Screen"; anchors.centerIn: parent }
+        Admin.ViewAllPatientsScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: viewAllDoctorsScreen
-        Rectangle {
-            color: "white"
-            Text { text: "View All Doctors Screen"; anchors.centerIn: parent }
+        Admin.ViewAllDoctorsScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: viewAllAppointmentsScreen
-        Rectangle {
-            color: "white"
-            Text { text: "View All Appointments Screen"; anchors.centerIn: parent }
+        Admin.ViewAllAppointmentsScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: viewUnpaidBillsScreen
-        Rectangle {
-            color: "white"
-            Text { text: "View Unpaid Bills Screen"; anchors.centerIn: parent }
+        Admin.ViewUnpaidBillsScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: dischargePatientScreen
-        Rectangle {
-            color: "white"
-            Text { text: "Discharge Patient Screen"; anchors.centerIn: parent }
+        Admin.DischargePatientScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: viewSecurityLogScreen
-        Rectangle {
-            color: "white"
-            Text { text: "View Security Log Screen"; anchors.centerIn: parent }
+        Admin.ViewSecurityLogScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 
     Component {
         id: generateDailyReportScreen
-        Rectangle {
-            color: "white"
-            Text { text: "Generate Daily Report Screen"; anchors.centerIn: parent }
+        Admin.GenerateDailyReportScreen {
+            onGoBack: {
+                stackView.pop()
+            }
         }
     }
 }

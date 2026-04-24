@@ -1,8 +1,8 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Window 2.15
+import "./components" as Components
 import "./screens" as Screens
-
 
 ApplicationWindow {
     id: mainWindow
@@ -11,50 +11,60 @@ ApplicationWindow {
     visible: true
     title: "MediCore Hospital Management System"
 
+    // Load the theme
+    Components.Theme {
+        id: theme
+    }
+
+    // Make theme globally accessible
+    property var globalTheme: theme
+
     StackView {
         id: stackView
         anchors.fill: parent
-        initialItem: loginScreen
+        initialItem: loginScreenComponent
     }
 
     Component {
-        id: loginScreen
+        id: loginScreenComponent
         Screens.LoginScreen {
-            onLoginSuccess: function(role, userId) {
-                if (role === "patient") {
-                    stackView.push(patientDashboard, { userId: userId })
-                } else if (role === "doctor") {
-                    stackView.push(doctorDashboard, { userId: userId })
-                } else if (role === "admin") {
-                    stackView.push(adminDashboard, { userId: userId })
+            onLoginSuccessToDashboard: function(role, userId) {
+                console.log("Login success:", role, userId)
+
+                if (role === "Patient") {
+                    stackView.push(patientDashboardComponent, { userId: userId })
+                } else if (role === "Doctor") {
+                    stackView.push(doctorDashboardComponent, { userId: userId })
+                } else if (role === "Admin") {
+                    stackView.push(adminDashboardComponent, { userId: userId })
                 }
             }
         }
     }
 
     Component {
-        id: patientDashboard
+        id: patientDashboardComponent
         Screens.PatientDashboard {
             onLogout: {
-                stackView.pop()
+                stackView.pop() // Go back to login screen
             }
         }
     }
 
     Component {
-        id: doctorDashboard
+        id: doctorDashboardComponent
         Screens.DoctorDashboard {
             onLogout: {
-                stackView.pop()
+                stackView.pop() // Go back to login screen
             }
         }
     }
 
     Component {
-        id: adminDashboard
+        id: adminDashboardComponent
         Screens.AdminDashboard {
             onLogout: {
-                stackView.pop()
+                stackView.pop() // Go back to login screen
             }
         }
     }

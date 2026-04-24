@@ -17,6 +17,7 @@ qt_add_executable(apphms
 
 qt_add_qml_module(apphms
     URI hms
+    VERSION 1.0
     QML_FILES
         # Main files
         qml/Main.qml
@@ -37,7 +38,11 @@ qt_add_qml_module(apphms
         qml/components/TableView.qml
         qml/components/AlertDialog.qml
         qml/components/LoadingSpinner.qml
-
+        qml/components/LoginDialog.qml
+        qml/components/Card.qml
+        qml/components/StyledButton.qml
+        qml/components/Theme.qml
+        qml/components/qmldir
         # Patient module files
         qml/patient/BookAppointmentScreen.qml
         qml/patient/CancelAppointmentScreen.qml
@@ -64,14 +69,10 @@ qt_add_qml_module(apphms
         qml/admin/DischargePatientScreen.qml
         qml/admin/ViewSecurityLogScreen.qml
         qml/admin/GenerateDailyReportScreen.qml
-
+        QML_FILES qml/components/ThemeLoader.qml
 )
 
-qt_add_resources(QML_RESOURCES
-    resources/qml.qrc
-)
 
-target_sources(apphms PRIVATE ${QML_RESOURCES})
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
