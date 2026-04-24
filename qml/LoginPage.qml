@@ -11,7 +11,7 @@ Page {
             text: "Welcome to MediCore Hospital Management System"
             font.bold: true
             font.pixelSize: 18
-            color: white
+            styleColor:  white
         }
 
         Button {

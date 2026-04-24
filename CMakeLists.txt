@@ -9,15 +9,21 @@ find_package(Qt6 REQUIRED COMPONENTS Quick)
 qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(apphms
-    main.cpp
+    src/main.cpp
 )
 
 qt_add_qml_module(apphms
     URI hms
     QML_FILES
-        Main.qml
-        QML_FILES LoginPage.qml
+        qml/Main.qml
+        qml/LoginPage.qml
 )
+
+qt_add_resources(QML_RESOURCES
+    resources/qml.qrc
+)
+
+target_sources(apphms PRIVATE ${QML_RESOURCES})
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an
