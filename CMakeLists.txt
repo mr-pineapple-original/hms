@@ -13,6 +13,11 @@ qt_standard_project_setup(REQUIRES 6.10)
 
 qt_add_executable(apphms
     src/main.cpp
+    src/admin.cpp
+    src/doctor.cpp
+    src/patient.cpp
+    src/person.cpp
+    src/char_array_functions.cpp
 )
 
 qt_add_qml_module(apphms

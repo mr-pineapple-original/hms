@@ -23,21 +23,21 @@ Dialog {
 
     background: Rectangle {
         radius: theme ? theme.radiusLarge : 14
-        color: "#1e293b"
-        border.color: "#334155"
+        color: theme ? theme.card : "#1e293b"
+        border.color: theme ? theme.border : "#334155"
         border.width: 1
     }
 
     header: Rectangle {
         height: 55
-        color: "#0f172a"
+        color: theme ? theme.header : "#0f172a"
         radius: theme ? theme.radiusLarge : 14
 
         Text {
             text: "Login - " + root.role
             anchors.centerIn: parent
-            color: "white"
-            font.pixelSize: 16
+            color: theme ? theme.text : "white"
+            font.pixelSize: theme ? theme.fontSizeLarge : 16
             font.bold: true
         }
     }
@@ -94,7 +94,7 @@ Dialog {
 
                 background: Rectangle {
                     radius: theme ? theme.radius : 8
-                    color: parent.pressed ? "#475569" : "#334155"
+                    color: parent.pressed ? (theme ? theme.primaryPressed : "#475569") : (theme ? theme.primary : "#334155")
                 }
 
                 contentItem: Text {

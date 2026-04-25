@@ -1,7 +1,3 @@
-// Since everyone in FAST hates us we are not allowed to use strings
-// This sucks
-// What is wrong with them
-
 #include<iostream>
 #pragma once
 
@@ -36,7 +32,7 @@ void safe_get_line(char* &ptr_arr)
 {
     int size = DEFAULT_SIZE_CHAR_ARRAY;
     if(ptr_arr != nullptr)
-    delete[] ptr_arr;
+        delete[] ptr_arr;
 
     ptr_arr = new char[size];
 
@@ -64,15 +60,13 @@ void safe_get_line(char* &ptr_arr)
         std::cout << "\n Name cannot be empty, try again \n";    
         safe_get_line(ptr_arr);
     }
-
 }
 
 template <typename T>
 void copy_array(T* &ptr_arr, const T* ptr_arr_src, int size)
 {
-
     if(ptr_arr != nullptr)
-    delete[] ptr_arr;
+        delete[] ptr_arr;
 
     ptr_arr = new T[size];
 
@@ -86,36 +80,39 @@ void copy_array(T* &ptr_arr, const T* ptr_arr_src, int size)
             break;
         }    
     }
-
 }
 
 int get_char_arr_size(const char* ptr_arr)
 {
+    if(!ptr_arr) return 0;
+    
     int length = 0;
     for(int i = 0; *(ptr_arr + i) != '\0'; i++)
     {
         length++;
     }
-
     return length;
 }
 
 void add_null_character_in_array(char* &ptr_arr)
 {
-    int size = sizeof(ptr_arr) / sizeof(char);
-    bool flag;
-    for(int i = 0; i < size; i ++)
+    if(!ptr_arr) return;
+    
+    int size = get_char_arr_size(ptr_arr);
+    bool flag = false;
+    
+    for(int i = 0; i < size; i++)
     {
-        if(*(ptr_arr + i) == ' \0')
+        if(*(ptr_arr + i) == '\0')
         {
             flag = true;
             break;
         }
     }
 
-    if(flag == true)
+    if(!flag)
     {
         resize_array(ptr_arr, size, size + 1);
-        *(ptr_arr + size - 1) = '\0';
+        *(ptr_arr + size) = '\0';
     }
 }
