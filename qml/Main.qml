@@ -31,7 +31,6 @@ ApplicationWindow {
             onLoginSuccessToDashboard: function(role, userId) {
                 console.log("Login success:", role, userId)
 
-                // Convert userId to integer
                 var userIdInt = parseInt(userId)
 
                 if (role === "Patient") {
