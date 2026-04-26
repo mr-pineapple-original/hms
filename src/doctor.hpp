@@ -5,9 +5,11 @@
 class Doctor : public Person
 {
 private:
+    double m_fee;
+    
     char* m_ptr_specialization;
     char* m_ptr_contact;
-    double m_fee;
+    
 
 public:
     Doctor();

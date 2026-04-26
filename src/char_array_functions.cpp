@@ -116,3 +116,27 @@ void add_null_character_in_array(char* &ptr_arr)
         *(ptr_arr + size) = '\0';
     }
 }
+
+bool is_cancelled(char* ptr_arr)
+{
+    // I hope everyone of them have a null pointer at the end
+    const char* cancelled = "cancelled";
+
+    int last_char = 0;
+    for(int i = 0; cancelled[i] != '\0'; i++)
+    {
+        if(*(ptr_arr + i) != cancelled[i])
+        {
+            return false;
+        }
+        last_char++;
+    }
+
+    if(*(ptr_arr + last_char) != '\0')
+    {
+        return false;
+    }
+
+    // If they are cancelled it will return true
+    return true;
+}

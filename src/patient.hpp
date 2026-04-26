@@ -5,8 +5,10 @@
 class Patient : public Person
 {
     private:
+        double m_balance;   
+         
         char* m_ptr_contact;
-        double m_balance;
+
     public:
         Patient();
         Patient(int id, char* ptr_password, char* ptr_name, const char* gender, int m_age, char* ptr_contact, double balance);

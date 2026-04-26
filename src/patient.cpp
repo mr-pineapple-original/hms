@@ -1,4 +1,5 @@
 #include "patient.hpp"
+#include "char_array_functions.cpp"
 
 Patient::Patient() : Person()
 {

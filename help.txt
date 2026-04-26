@@ -1,0 +1,14 @@
+So for everything 
+A doctor can have an appointment with one patient at one time at one specific time
+For that we also give him an appointment id?
+But we gotta make sure that for 2 appointment ids a doctor doesnt give the same time to another patient
+Even though that might be different appointment ids we still gotta make sure that he doesnt give the same time to multiple people
+For the bill we gotta make sure that the bill id is the same 
+Everyttime a bill is genereated we only gotta check for the bill id
+But then we will have to enforce that if a patient already had an appointment with the doctor on this date at a specific time 
+He cant just turn back time
+We will have to enforce it then
+
+
+I think for every id for patient, doctor etc we will have to make it a static class member to make sure every new patient gets the new one mate 
+Pheraps we can keep a count of total patients and doctors too by using a count variable or the id itself as a count 

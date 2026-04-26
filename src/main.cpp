@@ -3,6 +3,10 @@
 #include <QUrl>
 #include <QStringLiteral>
 
+
+#include "person.hpp"
+#include "patient.hpp"
+
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);

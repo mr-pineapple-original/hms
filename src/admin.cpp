@@ -1,5 +1,6 @@
-#include"admin.hpp"
 #include<iostream>
+#include"admin.hpp"
+#include "char_array_functions.cpp"
 
 Admin::Admin() : Person()
 {

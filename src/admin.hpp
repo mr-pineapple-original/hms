@@ -1,7 +1,7 @@
+#include<iostream>
 #include"person.hpp"
-#include "char_array_functions.cpp"
-
 #pragma once
+
 class Admin : public Person
 {
     public:

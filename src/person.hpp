@@ -7,8 +7,9 @@ static const char* female = "Female";
 class Person
 {
     protected:
+        int m_age;    
         const char* m_gender;
-        int m_age;
+        
         char* m_ptr_name;
         
         // Credientials

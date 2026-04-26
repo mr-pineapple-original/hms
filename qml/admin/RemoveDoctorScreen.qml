@@ -1,7 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
-import "../components" as Components
+import "../components"
 
 Rectangle {
     id: screen
@@ -9,70 +9,174 @@ Rectangle {
     height: parent.height
 
     property var theme: mainWindow ? mainWindow.globalTheme : null
-    signal goBack()  // Signal to go back to dashboard
+    property bool isLoading: false
+    property string statusMessage: ""
+    property bool statusSuccess: false
 
-    color: theme ? theme.background : "#ecf0f1"
+    // 🔹 model comes from C++
+    property var doctorsModel: mainWindow ? mainWindow.doctorsModel : null
 
-    // Back button
-    Button {
-        text: "← Back to Dashboard"
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.margins: 20
-        onClicked: goBack()
+    signal goBack()
+    signal removeDoctorRequested(int doctorId)
 
-        background: Rectangle {
-            radius: theme ? theme.radius : 5
-            color: theme ? theme.primary : "#3498db"
+    color: theme ? theme.background : "#0f172a"
+
+    ColumnLayout {
+        anchors.fill: parent
+
+        // HEADER
+        RowLayout {
+            Layout.fillWidth: true
+            Layout.margins: 20
+
+            StyledButton {
+                text: "← Back"
+                theme: theme
+                onClicked: goBack()
+            }
+
+            Text {
+                text: "Remove Doctor"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                color: theme.text
+                font.pixelSize: theme.fontSizeLarge
+                font.bold: true
+            }
+
+            Item { width: 80 }
         }
 
-        contentItem: Text {
-            text: parent.text
-            color: "white"
+        ScrollView {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.margins: 20
+
+            ColumnLayout {
+                width: ScrollView.view.width
+                spacing: 20
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 1000
+                    Layout.alignment: Qt.AlignHCenter
+
+                    radius: theme.radiusLarge
+                    color: theme.card
+                    border.color: theme.border
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        Layout.margins: 20
+                        spacing: 15
+
+                        // HEADER ROW
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 45
+                            radius: 6
+                            color: theme.primary
+
+                            RowLayout {
+                                anchors.fill: parent
+                                anchors.margins: 10
+
+                                Text { text: "ID"; Layout.preferredWidth: 60; color: "white"; font.bold: true }
+                                Text { text: "Name"; Layout.fillWidth: true; color: "white"; font.bold: true }
+                                Text { text: "Specialization"; Layout.preferredWidth: 180; color: "white"; font.bold: true }
+                                Text { text: "Fee"; Layout.preferredWidth: 100; color: "white"; font.bold: true }
+                                Text { text: "Action"; Layout.preferredWidth: 100; color: "white"; font.bold: true }
+                            }
+                        }
+
+                        // LIST
+                        ListView {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: contentHeight
+                            model: doctorsModel
+                            clip: true
+
+                            delegate: Rectangle {
+                                width: ListView.view.width
+                                height: 55
+                                color: index % 2 === 0 ? theme.surface : theme.card
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 10
+
+                                    Text { text: model.id; Layout.preferredWidth: 60; color: theme.primary }
+                                    Text { text: model.name; Layout.fillWidth: true; color: theme.text }
+                                    Text { text: model.specialization; Layout.preferredWidth: 180; color: theme.text }
+                                    Text { text: "$" + model.fee; Layout.preferredWidth: 100; color: theme.success }
+
+                                    StyledButton {
+                                        text: "Remove"
+                                        theme: theme
+                                        normalColor: theme.danger
+                                        hoverColor: theme.dangerHover
+                                        pressedColor: theme.dangerPressed
+
+                                        onClicked: {
+                                            confirmDialog.doctorId = model.id
+                                            confirmDialog.doctorName = model.name
+                                            confirmDialog.open()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // STATUS
+                        Text {
+                            visible: statusMessage.length > 0
+                            text: statusMessage
+                            color: statusSuccess ? theme.success : theme.danger
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+            }
         }
     }
 
-    // Your screen content here
-    ColumnLayout {
-        anchors.centerIn: parent
-        spacing: 20
-        width: 400
+    // CONFIRM DIALOG
+    AlertDialog {
+        id: confirmDialog
+        theme: theme
+        dialogTitle: "Remove Doctor"
+        dialogType: "warning"
+        confirmText: "Remove"
 
-        Text {
-            text: "Add Doctor"
-            font.pixelSize: theme ? theme.fontSizeTitle : 22
-            font.bold: true
-            color: theme ? theme.text : "#2c3e50"
-            Layout.alignment: Qt.AlignHCenter
+        property int doctorId: 0
+        property string doctorName: ""
+
+        onOpened: {
+            dialogMessage = "Remove doctor:\n" + doctorName + " (ID: " + doctorId + ")?"
         }
 
-        TextField {
-            placeholderText: "Doctor Name"
-            Layout.fillWidth: true
+        onConfirm: {
+            isLoading = true
+            removeDoctorRequested(doctorId)
         }
+    }
 
-        TextField {
-            placeholderText: "Specialization"
-            Layout.fillWidth: true
-        }
+    // LOADING
+    Rectangle {
+        anchors.fill: parent
+        visible: isLoading
+        color: "#80000000"
 
-        TextField {
-            placeholderText: "Phone Number"
-            Layout.fillWidth: true
+        BusyIndicator {
+            anchors.centerIn: parent
+            running: isLoading
         }
+    }
 
-        TextField {
-            placeholderText: "Email"
-            Layout.fillWidth: true
-        }
-
-        Components.StyledButton {
-            text: "Add Doctor"
-            Layout.alignment: Qt.AlignHCenter
-            onClicked: {
-                // TODO: Add doctor logic
-                goBack()  // Go back after adding
-            }
-        }
+    // 🔹 called from C++
+    function showResult(success, message) {
+        isLoading = false
+        statusSuccess = success
+        statusMessage = message
     }
 }

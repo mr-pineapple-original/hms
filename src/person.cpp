@@ -1,4 +1,5 @@
 #include "person.hpp"
+#include "char_array_functions.cpp"
 
 Person::Person()
 {
