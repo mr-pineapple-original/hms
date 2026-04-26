@@ -86,13 +86,13 @@ bool Prescription::operator==(const Prescription& obj) const
 
 std::ostream& operator<<(std::ostream& output, const Prescription& obj)
 {
-    output << "Prescription ID: " << obj.m_prescription_id << "\n";
-    output << "Appointment ID: " << obj.m_appointment_id << "\n";
-    output << "Patient ID: " << obj.m_patient_id << "\n";
-    output << "Doctor ID: " << obj.m_doctor_id << "\n";
-    output << "Date: " << obj.m_ptr_date << "\n";
-    output << "Medicines: " << obj.m_ptr_medicine << "\n";
-    output << "Doctor Notes: " << obj.m_ptr_doc_note << "\n";
+    output << obj.m_prescription_id << ",";
+    output << obj.m_appointment_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_doctor_id << ",";
+    output << obj.m_ptr_date << ",";
+    output << obj.m_ptr_medicine << ",";
+    output << obj.m_ptr_doc_note;
 
     return output;
 }

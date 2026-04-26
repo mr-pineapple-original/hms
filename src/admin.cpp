@@ -85,6 +85,16 @@ bool Admin::authenticate(int id, char* ptr_password) const
     return true;
 }
 
+
+std::ostream& operator<<(std::ostream& output, const Admin& obj)
+{
+    output << obj.get_id() << ","
+           << obj.get_name() << ","
+           << obj.get_password();
+
+    return output;
+}
+
 Admin::~Admin()
 {
 

@@ -14,6 +14,8 @@ class Admin : public Person
         void display() override;
         void menu() override;
         bool authenticate(int id, char* ptr_password) const;
+        
+        friend std::ostream& operator<<(std::ostream& output, const Admin& obj);
 
         ~Admin();
 };  

@@ -74,12 +74,12 @@ bool Bill::operator==(const Bill& obj) const
 
 std::ostream& operator<<(std::ostream& output, const Bill& obj)
 {
-    output << "Bill ID: " << obj.m_bill_id << "\n";
-    output << "Patient ID: " << obj.m_patient_id << "\n";
-    output << "Appointment ID: " << obj.m_appointment_id << "\n";
-    output << "Amount: PKR " << obj.m_amount << "\n";
-    output << "Status: " << obj.m_ptr_status << "\n";
-    output << "Date: " << obj.m_ptr_date << "\n";
+    output << obj.m_bill_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_appointment_id << ",";
+    output << obj.m_amount << ",";
+    output << obj.m_ptr_status << ",";
+    output << obj.m_ptr_date;
     return output;
 }
 

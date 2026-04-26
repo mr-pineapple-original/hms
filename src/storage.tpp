@@ -56,3 +56,15 @@ int Storage<Entity>::size() const
 {
     return count;
 }
+
+template<typename Entity>
+Entity* get_data()
+{
+    return data[0]; // Returns the pointer for the first member of the static array which we can use to traverse the whole array
+}
+
+template<typename Entity>
+const Entity* get_data()
+{
+    return data[0]; // Returns the pointer for the first member of the static array which we can use to traverse the whole array but the const one which helps us to use it in our static utility filehandler class
+}

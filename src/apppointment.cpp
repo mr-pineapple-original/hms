@@ -101,12 +101,12 @@ bool Appointment::operator==(const Appointment& obj) const
 
 std::ostream& operator<<(std::ostream& output, const Appointment& obj)
 {
-    output << "Appointment ID: " << obj.m_appointment_id << "\n";
-    output << "Patient ID: " << obj.m_patient_id << "\n";
-    output << "Doctor ID: " << obj.m_doctor_id << "\n";
-    output << "Date: " << obj.m_ptr_date << "\n";
-    output << "Time: " << obj.m_ptr_time_slot << "\n";
-    output << "Status: " << obj.m_ptr_status << "\n";
+    output << obj.m_appointment_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_doctor_id << ",";
+    output << obj.m_ptr_date << ",";
+    output << obj.m_ptr_time_slot << ",";
+    output << obj.m_ptr_status;
 
     return output;
 }

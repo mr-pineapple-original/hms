@@ -1,5 +1,6 @@
 #include<iostream>
 #include<fstream>
+#include<cstdio>
 #pragma once
 
 #include"storage.hpp"

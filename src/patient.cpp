@@ -79,12 +79,13 @@ bool Patient::operator==(const Patient& obj) const
 
 std::ostream& operator<<(std::ostream& output, const Patient& obj)
 {
-    output << "ID: " << obj.m_id << "\n";
-    output << "Name: " << obj.m_ptr_name << "\n";
-    output << "Age: " << obj.m_age << "\n";
-    output << "Gender: " << obj.m_gender << "\n";
-    output << "Contact: " << obj.m_ptr_contact << "\n";
-    output << "Balance: PKR " << obj.m_balance << "\n";
+    output << obj.m_id << ",";
+    output << obj.m_ptr_name << ",";
+    output << obj.m_age << ",";
+    output << obj.m_gender << ",";
+    output << obj.m_ptr_contact << ",";
+    output << obj.m_ptr_password << ",";
+    output << obj.m_balance;
 
     return output;
 }
