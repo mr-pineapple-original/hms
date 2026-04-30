@@ -1,22 +1,12 @@
-#include <SFML/Graphics.hpp>
 #include "app.hpp"
-#include "components/label.hpp"
-#include "components/button.hpp"
-#include <iostream>
+#include "screens/loginscreen.hpp"
+#include <memory>
 
 void App::run()
 {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "HMS");
 
-    Label label("Hello");
-    label.set_position(100, 100);
-
-    Button btn("Click Me");
-    btn.set_position(200, 200);
-
-    btn.set_on_click([]() {
-        std::cout << "Button clicked\n";
-    });
+    std::unique_ptr<Screen> screen = std::make_unique<LoginScreen>();
 
     while (window.isOpen())
     {
@@ -25,14 +15,14 @@ void App::run()
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            btn.handle_event(*event, window); // REQUIRED
+            screen->handle_event(window, *event);
         }
 
+        if (screen->should_close)
+            window.close();
+
         window.clear();
-
-        label.render(window);
-        btn.render(window);
-
+        screen->render(window);
         window.display();
     }
 }
