@@ -132,7 +132,7 @@ bool Validator::is_leap_year(int year)
 
 bool Validator::validate_time_slot(const char* ptr_time)
 {
-    if (ptr_time != nullptr)
+    if (ptr_time == nullptr)
         return false;
 
         // I never knew we could have done that :(
