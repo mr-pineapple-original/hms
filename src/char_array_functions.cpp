@@ -141,7 +141,7 @@ bool is_cancelled(char* ptr_arr)
     return true;
 }
 
-char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
+char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
 {
     int size1 = get_char_arr_size(ptr_arr1);
     int size2 = get_char_arr_size(ptr_arr2);
