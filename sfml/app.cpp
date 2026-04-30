@@ -1,8 +1,10 @@
 #include <SFML/Graphics.hpp>
 #include "app.hpp"
+#include "components/heading.cpp"
 
 void App::run()
 {
+    
     sf::RenderWindow window(sf::VideoMode({800, 600}), "HMS");
 
     while (window.isOpen())
