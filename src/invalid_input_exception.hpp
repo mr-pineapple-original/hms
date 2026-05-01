@@ -1,5 +1,3 @@
-#include<iostream>
-
 #include"hospital_exception.hpp"
 
 #pragma once
