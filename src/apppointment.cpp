@@ -181,3 +181,13 @@ void Appointment::set_appointment(int appointment_id, int patient_id, int doctor
 
 }
 
+Appointment::~Appointment()
+{
+    delete[] m_ptr_date;
+    delete[] m_ptr_time_slot;
+    delete[] m_ptr_status;
+
+    m_ptr_date = nullptr;
+    m_ptr_time_slot = nullptr;
+    m_ptr_status = nullptr;
+}

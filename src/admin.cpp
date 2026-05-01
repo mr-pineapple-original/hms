@@ -12,7 +12,7 @@ Admin::Admin(int id, char* ptr_password)  : Person(id, ptr_password, m_ptr_name,
 
 }
 
-Admin::Admin(const Admin& obj)
+Admin::Admin(const Admin& obj) : Person(obj)
 {
 
 }

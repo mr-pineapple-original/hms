@@ -482,7 +482,7 @@ void FileHandler::load_doctors(Storage<Doctor>& doctors, const char* ptr_file_na
 
 // I think it could have been done with a template skull:emoji
 
-void append_patient(const Patient& patient, const char* ptr_name)
+void FileHandler::append_patient(const Patient& patient, const char* ptr_name)
 {
     std::ofstream fout(ptr_name, std::ios::app);
     if(!fout)

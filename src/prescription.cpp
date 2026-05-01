@@ -58,7 +58,7 @@ Prescription& Prescription::operator=(const Prescription& obj)
             delete[] m_ptr_date;
         
         if(m_ptr_medicine != nullptr)
-            delete[] m_ptr_date;
+            delete[] m_ptr_medicine;
         
         if(m_ptr_doc_note != nullptr)
             delete[] m_ptr_doc_note;

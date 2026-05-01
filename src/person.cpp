@@ -51,10 +51,14 @@ Person& Person::operator=(const Person& obj)
         m_gender = obj.m_gender;
 
         int name_size = get_char_arr_size(obj.m_ptr_name);
+        if(m_ptr_name != nullptr)
+            delete[] m_ptr_name;
         m_ptr_name = nullptr;
         copy_array(m_ptr_name, obj.m_ptr_name, name_size + 1);
 
         int password_size = get_char_arr_size(obj.m_ptr_password);
+            if(m_ptr_password != nullptr)
+                delete[] m_ptr_password;
         m_ptr_password = nullptr;
         copy_array(m_ptr_password, obj.m_ptr_password, password_size + 1);
     }
