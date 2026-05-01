@@ -13,5 +13,7 @@ class Validator
         static bool validate_positive_float(float value);
         static bool validate_positive_double(double value);
         static bool validate_time_slot(const char* ptr_time_slot); // IDK how to know at what time slots the doctor is free at
+        static bool is_within_operating_hours(const char* ptr_time_slot);
+        static bool validate_time_format(const char* ptr_time_slot);
         static bool validate_date(const char* ptr_date);
 };

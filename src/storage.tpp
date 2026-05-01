@@ -1,4 +1,6 @@
 #include"storage.hpp"
+#include"appointment.hpp"
+#include"char_array_functions.cpp"
 
 template <typename Entity>
 Storage<Entity>::Storage()
@@ -58,13 +60,14 @@ int Storage<Entity>::size() const
 }
 
 template<typename Entity>
-Entity* get_data()
+Entity* Storage<Entity>::get_data()
 {
-    return data[0]; // Returns the pointer for the first member of the static array which we can use to traverse the whole array
+    return data; // Returns the pointer for the first member of the static array which we can use to traverse the whole array
 }
 
 template<typename Entity>
-const Entity* get_data()
+const Entity* Storage<Entity>::get_data() const
 {
-    return data[0]; // Returns the pointer for the first member of the static array which we can use to traverse the whole array but the const one which helps us to use it in our static utility filehandler class
+    return data; // Returns the pointer for the first member of the static array which we can use to traverse the whole array but the const one which helps us to use it in our static utility filehandler class
 }
+

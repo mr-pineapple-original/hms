@@ -7,7 +7,7 @@ class Storage
 private:
     Entity data[100];
     int count;
-
+    
 public:
     Storage();
 

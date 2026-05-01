@@ -2,6 +2,7 @@
 #include"parser.hpp"
 #include"char_array_functions.cpp"
 #include"person.hpp"
+#include"file_not_found_exception.hpp"
 
 template<typename Entity>
 void FileHandler::rewrite_file(const Storage<Entity>& entity, const char* ptr_file_name)
@@ -13,8 +14,7 @@ void FileHandler::rewrite_file(const Storage<Entity>& entity, const char* ptr_fi
 
     if(!fout)
     {
-        std::cout << "\n Error creating file \n";
-        return;
+        throw FileNotFoundException();
     }
 
     const Entity* ptr_entity = entity.get_data();
@@ -58,8 +58,7 @@ void FileHandler::load_patients(Storage<Patient>& patients, const char* ptr_file
 
     if (!fin)
     {
-        std::cout << "\nError opening patients file.";
-        return;
+        throw FileNotFoundException();
     }
 
         while (true)
@@ -150,8 +149,7 @@ void FileHandler::load_admins(Storage<Admin>& admins, const char* ptr_file_name)
 
     if (!fin)
     {
-        std::cout << "\nError opening admins file.";
-        return;
+        throw FileNotFoundException();
     }
 
     while (true)
@@ -221,8 +219,7 @@ void FileHandler::load_appointments(Storage<Appointment>& appointments, const ch
 
     if (!fin)
     {
-        std::cout << "\nError opening appointments file.";
-        return;
+        throw FileNotFoundException();
     }
 
     while (true)
@@ -307,8 +304,7 @@ void FileHandler::load_bills(Storage<Bill>& bills, const char* ptr_file_name)
 
     if (!fin)
     {
-        std::cout << "\nError opening bills file.";
-        return;
+        throw FileNotFoundException();
     }
 
     while (true)
@@ -392,8 +388,7 @@ void FileHandler::load_doctors(Storage<Doctor>& doctors, const char* ptr_file_na
 
     if (!fin)
     {
-        std::cout << "\nError opening doctors file.";
-        return;
+        throw FileNotFoundException();
     }
 
     while (true)
@@ -482,13 +477,12 @@ void FileHandler::load_doctors(Storage<Doctor>& doctors, const char* ptr_file_na
 
 // I think it could have been done with a template skull:emoji
 
-void append_patient(const Patient& patient, const char* ptr_name)
+void FileHandler::append_patient(const Patient& patient, const char* ptr_name)
 {
     std::ofstream fout(ptr_name, std::ios::app);
     if(!fout)
     {
-        std::cout << "\n Error opening patient file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << patient << std::endl;
@@ -501,8 +495,7 @@ void FileHandler::append_admin(const Admin& admin, const char* ptr_file_name)
 
     if (!fout)
     {
-        std::cout << "\n Error opening admin file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << admin << std::endl;
@@ -516,8 +509,7 @@ void FileHandler::append_appointment(const Appointment& appointment, const char*
 
     if (!fout)
     {
-        std::cout << "\n Error opening appointment file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << appointment << std::endl;
@@ -531,8 +523,7 @@ void FileHandler::append_bill(const Bill& bill, const char* ptr_file_name)
 
     if (!fout)
     {
-        std::cout << "\n Error opening bill file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << bill << std::endl;
@@ -546,8 +537,7 @@ void FileHandler::append_doctor(const Doctor& doctor, const char* ptr_file_name)
 
     if (!fout)
     {
-        std::cout << "\n Error opening doctor file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << doctor << std::endl;
@@ -561,8 +551,7 @@ void FileHandler::append_prescription(const Prescription& prescription, const ch
 
     if (!fout)
     {
-        std::cout << "\n Error opening prescription file for appending";
-        return;
+        throw FileNotFoundException();
     }
 
     fout << prescription << std::endl;

@@ -1,5 +1,9 @@
 #include"appointment.hpp"
 #include"char_array_functions.cpp"
+#include"invalid_input_exception.hpp"
+#include"slot_unavaialable_exception.hpp"
+#include"hospital_hours_violation_exception.hpp"
+#include"validator.hpp"
 
 Appointment::Appointment()
 {
@@ -153,6 +157,19 @@ void Appointment::set_date(char* ptr_date)
 
 void Appointment::set_time_slot(char* ptr_time_slot)
 {
+    if(ptr_time_slot == nullptr)
+        throw InvalidInputException();
+
+    if(!Validator::validate_time_format(ptr_time_slot))
+    {
+        throw InvalidInputException();
+    }
+
+    if(!Validator::is_within_operating_hours(ptr_time_slot))
+    {
+        throw HospitalHoursViolationException();
+    }
+
     if(m_ptr_time_slot != nullptr)
         delete[] m_ptr_time_slot;
 
@@ -181,3 +198,13 @@ void Appointment::set_appointment(int appointment_id, int patient_id, int doctor
 
 }
 
+Appointment::~Appointment()
+{
+    delete[] m_ptr_date;
+    delete[] m_ptr_status;
+    delete[] m_ptr_time_slot;
+
+    m_ptr_date = nullptr;
+    m_ptr_status = nullptr;
+    m_ptr_time_slot = nullptr;
+}

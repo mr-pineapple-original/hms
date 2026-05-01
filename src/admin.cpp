@@ -1,18 +1,20 @@
 #include<iostream>
 #include"admin.hpp"
 #include "char_array_functions.cpp"
+#include"invalid_input_exception.hpp"
 
 Admin::Admin() : Person()
 {
     
 }
 
-Admin::Admin(int id, char* ptr_password)  : Person(id, ptr_password, m_ptr_name, male, 18)
+Admin::Admin(int id, char* ptr_password)  : Person(id, ptr_password, "Unknown", male, 18)
 {
-
+    if(ptr_password == nullptr)
+        throw InvalidInputException();
 }
 
-Admin::Admin(const Admin& obj)
+Admin::Admin(const Admin& obj) : Person(obj)
 {
 
 }
@@ -64,6 +66,11 @@ bool Admin::authenticate(int id, char* ptr_password) const
     if(m_id != id)
     {
         return false;
+    }
+
+    if(ptr_password == nullptr)
+    {
+        throw InvalidInputException();
     }
 
     int size = get_char_arr_size(ptr_password);

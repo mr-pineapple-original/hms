@@ -1,6 +1,6 @@
 #include"hospital_exception.hpp"
 
-HospitalException::HospitalException(char* ptr_message)
+HospitalException::HospitalException(const char* ptr_message)
 {
     // Used 200 because our project says we have to have a static character array to store 200 characters
     for(int i = 0; *(ptr_message + i) != '\0' && i < 200; i++)

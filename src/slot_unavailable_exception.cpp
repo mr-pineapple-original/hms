@@ -1,6 +1,6 @@
-#include"slot_unavaialable_exception.hpp"
+#include"slot_unavailable_exception.hpp"
 
-SlotUnavaialableException::SlotUnavaialableException() : HospitalException(" Sorry the slot right now is unavaiable")
+SlotUnavailableException::SlotUnavailableException() : HospitalException(" Sorry the slot right now is unavaiable")
 {
     
 }
