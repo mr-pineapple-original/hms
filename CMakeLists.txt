@@ -10,6 +10,10 @@ find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 add_executable(apphms
     src/main_sfml.cpp
     sfml/app.cpp
+    sfml/screens/logindialog.cpp
+    sfml/screens/loginscreen.cpp
+    sfml/components/ui_manager.cpp
+
     #src/admin.cpp
     #src/doctor.cpp
     #src/patient.cpp

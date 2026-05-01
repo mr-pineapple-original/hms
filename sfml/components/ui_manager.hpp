@@ -1,27 +1,27 @@
 #pragma once
 #include <SFML/Graphics.hpp>
+#include "../screens/screen.hpp"
 #include <stdexcept>
 
 class UIManager {
 private:
+    static UIManager* s_instance;
     sf::Font font;
+    Screen* m_ptr_current_screen;
 
-    UIManager() {
-        if (!font.openFromFile("assets/fonts/jetbrains.ttf")) {
-            throw std::runtime_error("Failed to load font");
-        }
-    }
+    UIManager(); // only declare
 
 public:
-    UIManager(const UIManager&) = delete;
-    UIManager& operator=(const UIManager&) = delete;
+    static UIManager& instance();
 
-    static UIManager& instance() {
-        static UIManager instance;
-        return instance;
-    }
+    sf::Font& get_font();
 
-    const sf::Font& get_font() const {
-        return font;
-    }
+    void set_screen(Screen* ptr_screen);
+    Screen* get_screen();
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event);
+    void update();
+    void render(sf::RenderWindow& window);
+
+    ~UIManager();
 };
