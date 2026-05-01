@@ -17,7 +17,7 @@ qt_add_executable(apphms
     # src/doctor.cpp
     # src/patient.cpp
     # src/person.cpp
-    # src/char_array_functions.cpp
+    # src/char_array_functions.hpp
 )
 
 qt_add_qml_module(apphms

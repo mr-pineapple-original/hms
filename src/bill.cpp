@@ -1,5 +1,5 @@
 #include "bill.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 
 Bill::Bill()
 {

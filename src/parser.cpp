@@ -1,5 +1,5 @@
 #include"parser.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 
 void Parser::parse_int(const char* line, int& i, int& value)
 {

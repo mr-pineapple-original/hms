@@ -34,7 +34,7 @@ class Appointment
         char* get_status() const;
 
 
-        void Appointment::set_appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time_slot, char* ptr_status);
+        void set_appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time_slot, char* ptr_status);
 
         ~Appointment();
 };

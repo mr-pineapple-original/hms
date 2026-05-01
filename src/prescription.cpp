@@ -1,5 +1,5 @@
 #include"prescription.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 
 Prescription::Prescription()
 {

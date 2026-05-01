@@ -1,5 +1,5 @@
 #include"appointment.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 #include"invalid_input_exception.hpp"
 #include"slot_unavaialable_exception.hpp"
 #include"hospital_hours_violation_exception.hpp"

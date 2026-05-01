@@ -2,7 +2,7 @@
 
 #include"storage.hpp"
 #include"appointment.hpp"
-#include "char_array_functions.cpp"
+#include "char_array_functions.hpp"
 #include "slot_unavailable_exception.hpp"
 
 #pragma once

@@ -1,6 +1,6 @@
 #include<iostream>
 #include"admin.hpp"
-#include "char_array_functions.cpp"
+#include "char_array_functions.hpp"
 #include"invalid_input_exception.hpp"
 
 Admin::Admin() : Person()

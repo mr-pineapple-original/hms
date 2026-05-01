@@ -1,6 +1,6 @@
 #include"file_handler.hpp"
 #include"parser.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 #include"person.hpp"
 #include"file_not_found_exception.hpp"
 

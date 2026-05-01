@@ -1,6 +1,6 @@
 #include"storage.hpp"
 #include"appointment.hpp"
-#include"char_array_functions.cpp"
+#include"char_array_functions.hpp"
 
 template <typename Entity>
 Storage<Entity>::Storage()
