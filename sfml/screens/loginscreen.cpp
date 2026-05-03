@@ -18,15 +18,19 @@ LoginScreen::LoginScreen()
     exit_btn.set_position(150, 300);
 
     patient_btn.set_on_click([]() {
+        std::cout << "Loging as Patient: " << std::endl;
         UIManager::instance().set_screen(new LoginDialog(PATIENT));
     });
     doctor_btn.set_on_click([]() {
+        std::cout << "Loging as Doctor: " << std::endl;
         UIManager::instance().set_screen(new LoginDialog(DOCTOR));
     });
     admin_btn.set_on_click([]() {
+        std::cout << "Loging as Admin: " << std::endl;
         UIManager::instance().set_screen(new LoginDialog(ADMIN));
     });
     exit_btn.set_on_click([this]() {
+        std::cout << "Exiting!" << std::endl;
         should_close = true;
     });
 }

@@ -143,6 +143,67 @@ void FileHandler::load_patients(Storage<Patient>& patients, const char* ptr_file
     fin.close();
 }
 
+void FileHandler::load_prescriptions(Storage<Prescription>& prescriptions, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+    if (!fin) {
+        throw FileNotFoundException();
+    }
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        // read line manually
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+            ptr_line[i++] = ch;
+        }
+
+        if (i == 0 && fin.eof()) {
+            delete[] ptr_line;
+            break;
+        }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int prescription_id;
+        int patient_id;
+        int appointment_id;
+        int doctor_id;
+
+        char* ptr_date = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_medicine = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_note = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, prescription_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, appointment_id);  Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, patient_id);      Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, doctor_id);       Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_date);     Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_medicine); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_note);
+
+        Prescription obj(prescription_id, appointment_id, patient_id, doctor_id,
+                 ptr_date, ptr_medicine, ptr_note); 
+                 
+        prescriptions.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_date;
+        delete[] ptr_medicine;
+        delete[] ptr_note;
+    }
+
+    fin.close();
+}
+
+
+
 void FileHandler::load_admins(Storage<Admin>& admins, const char* ptr_file_name)
 {
     std::ifstream fin(ptr_file_name);
@@ -587,3 +648,189 @@ void FileHandler::update_prescriptions(const Storage<Prescription>& prescription
 }
 
 
+
+// Validator Functions need to be checked
+bool FileHandler::validate_patient(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    
+    if (!fin) 
+        throw FileNotFoundException();
+
+    while (true) 
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; 
+        char ch;
+
+        while (fin.get(ch) && ch != '\n')
+         {
+            if (i >= size - 1) 
+            { 
+                resize_array(ptr_line, size, size * 2); size *= 2;
+            }
+            ptr_line[i++] = ch;
+        }
+
+        if (i == 0 && fin.eof())
+         { 
+            delete[] ptr_line;
+            ptr_line = nullptr; 
+            break; 
+        }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id, age; float balance;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_gender = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_contact = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, age); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_gender); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_contact); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password); Parser::skip_comma(ptr_line, index);
+        Parser::parse_float(ptr_line, index, balance);
+
+        // Convert file_id to char array manually
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else 
+        {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_gender; delete[] ptr_contact; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+bool FileHandler::validate_doctor(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    if (!fin) throw FileNotFoundException();
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) { resize_array(ptr_line, size, size * 2); size *= 2; }
+            ptr_line[i++] = ch;
+        }
+        if (i == 0 && fin.eof()) { delete[] ptr_line; break; }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id; double fee;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_specialization = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_contact = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_specialization); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_contact); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password); Parser::skip_comma(ptr_line, index);
+        Parser::parse_double(ptr_line, index, fee);
+
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_specialization; delete[] ptr_contact; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+bool FileHandler::validate_admin(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    if (!fin) throw FileNotFoundException();
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) { resize_array(ptr_line, size, size * 2); size *= 2; }
+            ptr_line[i++] = ch;
+        }
+        if (i == 0 && fin.eof()) { delete[] ptr_line; break; }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password);
+
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+
+void FileHandler::log_security_attempt(const char* role, int entered_id, const char* result)
+{
+    std::ofstream fout("security_log.txt", std::ios::app);
+
+    if(!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    time_t now = time(0);
+    tm* current = localtime(&now);
+
+    fout << current->tm_mday << "-"
+         << current->tm_mon + 1 << "-"
+         << current->tm_year + 1900 << " "
+         << current->tm_hour << ":"
+         << current->tm_min << ":"
+         << current->tm_sec << ","
+         << role << ","
+         << entered_id << ","
+         << result << std::endl;
+
+    fout.close();
+}

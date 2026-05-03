@@ -1,12 +1,13 @@
 #include "app.hpp"
 #include "screens/loginscreen.hpp"
+#include "screens/logindialog.hpp"
 #include <memory>
 
 void App::run()
 {
     sf::RenderWindow window(sf::VideoMode({800, 600}), "HMS");
 
-    std::unique_ptr<Screen> screen = std::make_unique<LoginScreen>();
+    UIManager::instance().set_screen(new LoginScreen());
 
     while (window.isOpen())
     {
@@ -15,14 +16,15 @@ void App::run()
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            screen->handle_event(window, *event);
+            UIManager::instance().handle_event(window, *event);
         }
 
-        if (screen->should_close)
+        if (UIManager::instance().get_screen()->should_close)
             window.close();
 
         window.clear();
-        screen->render(window);
+        UIManager::instance().render(window);
         window.display();
     }
 }
+

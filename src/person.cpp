@@ -1,5 +1,6 @@
 #include "person.hpp"
 #include "char_array_functions.hpp"
+#include "invalid_input_exception.hpp"
 
 Person::Person()
 {
@@ -89,6 +90,38 @@ char* Person::get_password() const
 {
     return m_ptr_password;
 }
+
+bool Person::login(int id, char* ptr_password) const
+{
+    if(m_id != id)
+    {
+        return false;
+    }
+
+    if(ptr_password == nullptr)
+    {
+        throw InvalidInputException();
+    }
+
+    int size = get_char_arr_size(ptr_password);
+    int m_size = get_char_arr_size(m_ptr_password);
+    
+    if(size != m_size)
+    {
+        return false;
+    }
+
+    for(int i = 0; i < size; i++)
+    {
+        if(*(m_ptr_password + i) != *(ptr_password + i))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 
 Person::~Person()
 {

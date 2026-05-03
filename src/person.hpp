@@ -30,5 +30,7 @@ class Person
         int get_age() const;
         const char* get_gender() const;
         
+        bool login(int id, char* ptr_password) const;
+
         virtual ~Person();
 };

@@ -47,4 +47,11 @@ class FileHandler
         // Generating new id that can be used by reading from the storage and returning + 1 of the last id
         template<typename Entity>
         static int generate_new_id(const Storage<Entity>& entity);
+
+        static bool validate_patient(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_doctor(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
+
+        static void log_security_attempt(const char* role, int entered_id, const char* result);
 };  

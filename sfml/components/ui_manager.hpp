@@ -9,7 +9,7 @@ private:
     sf::Font font;
     Screen* m_ptr_current_screen;
 
-    UIManager(); // only declare
+    UIManager(); 
 
 public:
     static UIManager& instance();

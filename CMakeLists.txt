@@ -8,29 +8,34 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 
 add_executable(apphms
+
+    # BACKEND ! :D
     src/main_sfml.cpp
+    src/admin.cpp
+    src/doctor.cpp
+    src/patient.cpp
+    src/person.cpp
+    # src/char_array_functions.cpp
+    # src/storage.tpp
+    src/apppointment.cpp
+    src/bill.cpp
+    src/file_handler.cpp
+    src/parser.cpp
+    src/prescription.cpp
+    src/validator.cpp
+    src/hospital_hours_violation_exception.cpp
+    src/hospital_exception.cpp
+    src/invalid_input_exception.cpp
+    src/insufficient_funds_exception.cpp
+    src/file_not_found_exception.cpp
+    src/slot_unavailable_exception.cpp
+
+    # FRONTEND :3
+
     sfml/app.cpp
     sfml/screens/logindialog.cpp
     sfml/screens/loginscreen.cpp
     sfml/components/ui_manager.cpp
-
-    #src/admin.cpp
-    #src/doctor.cpp
-    #src/patient.cpp
-    #src/person.cpp
-    #src/char_array_functions.cpp
-    #src/apppointment.cpp
-    #src/bill.cpp
-    #src/file_handler.cpp
-    #src/parser.cpp
-    #src/prescription.cpp
-    #src/validator.cpp
-    #src/hospital_exception.cpp
-    #src/invalid_input_exception.cpp
-    #src/insufficent_funds_exception.cpp
-    #src/file_not_found_exception.cpp
-    #src/slot_unavailable_exception.cpp
-
 )
 
 target_include_directories(apphms PRIVATE

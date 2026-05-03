@@ -211,36 +211,6 @@ char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
     return ptr_result;
 }
 
-char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
-{
-    int size1 = get_char_arr_size(ptr_arr1);
-    int size2 = get_char_arr_size(ptr_arr2);
-
-    if( ptr_arr1 == nullptr || ptr_arr2 == nullptr)
-    {
-        return nullptr;
-    }
-
-    int total_size = size1 + size2 + 1; // For '\0' in the end
-    char* ptr_result = new char[total_size];
-
-    int it = 0;
-
-    for(int i = 0; i < size1; i++)
-    {
-        *(ptr_result + it) = *(ptr_arr1 + i);
-        it++;
-    }
-
-    for(int i = 0; i < size2; i++)
-    {
-        *(ptr_result + it) = *(ptr_arr2 + i);
-        it++;
-    }
-
-    *(ptr_result + it) = '\0';
-    return ptr_result;
-}
 
 char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
 {

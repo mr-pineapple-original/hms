@@ -19,6 +19,7 @@ private:
     Button login_btn;
     Button back_btn;
 public:
+    int failed_attempts;
     LoginDialog(UserRole user_role);
     void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
     void update() override;
