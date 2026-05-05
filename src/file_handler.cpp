@@ -33,22 +33,22 @@ void FileHandler::rewrite_file(const Storage<Entity>& entity, const char* ptr_fi
     ptr_temp_name = nullptr;
 }
 
-template<typename Entity>
-int FileHandler::generate_new_id(const Storage<Entity>& entity)
-{
-    int max_id = 0;
-    const Entity* ptr_entity = entity.get_data();
+// template<typename Entity>
+// int FileHandler::generate_new_id(const Storage<Entity>& entity)
+// {
+//     int max_id = 0;
+//     const Entity* ptr_entity = entity.get_data();
 
-    for(int i = 0; i < entity.size(); i++)
-    {
-        if(max_id < (*(ptr_entity + i)).get_id())
-        {
-            max_id = (*(ptr_entity + i)).get_id();
-        }
-    }
-    max_id = max_id + 1;
-    return max_id;
-}
+//     for(int i = 0; i < entity.size(); i++)
+//     {
+//         if(max_id < (*(ptr_entity + i)).get_id())
+//         {
+//             max_id = (*(ptr_entity + i)).get_id();
+//         }
+//     }
+//     max_id = max_id + 1;
+//     return max_id;
+// }
 
 // The reason we cant put the loaders in the template is because the constructors of admin, doctor, prescription etc require different parameters :/
 
@@ -146,25 +146,30 @@ void FileHandler::load_patients(Storage<Patient>& patients, const char* ptr_file
 void FileHandler::load_prescriptions(Storage<Prescription>& prescriptions, const char* ptr_file_name)
 {
     std::ifstream fin(ptr_file_name);
-    if (!fin) {
+    if (!fin) 
+    {
         throw FileNotFoundException();
     }
 
-    while (true) {
+    while (true) 
+    {
         int size = DEFAULT_SIZE_CHAR_ARRAY;
         char* ptr_line = new char[size];
-        int i = 0; char ch;
+        int i = 0; 
+        char ch;
 
         // read line manually
         while (fin.get(ch) && ch != '\n') {
-            if (i >= size - 1) {
+            if (i >= size - 1) 
+            {
                 resize_array(ptr_line, size, size * 2);
                 size *= 2;
             }
             ptr_line[i++] = ch;
         }
 
-        if (i == 0 && fin.eof()) {
+        if (i == 0 && fin.eof())
+        {
             delete[] ptr_line;
             break;
         }
@@ -621,6 +626,11 @@ void FileHandler::append_prescription(const Prescription& prescription, const ch
 }
 
 // This could also have been done with templates skull:emoji
+
+void FileHandler::update_patients(const Storage<Patient>& patients, const char* ptr_file_name)
+{
+    rewrite_file(patients, ptr_file_name);
+}
 
 void FileHandler::update_admins(const Storage<Admin>& admins, const char* ptr_file_name)
 {

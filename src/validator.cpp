@@ -25,6 +25,15 @@ bool Validator::validate_menu_choice(int choice, int min, int max)
     return true;
 }
 
+bool Validator::validate_positive_int(int value)
+{
+    if(value < 0)
+    {
+        throw InvalidInputException();
+    }
+    return true;
+}
+
 bool Validator::validate_positive_float(float value)
 {
     if(value < 0)
@@ -217,3 +226,11 @@ bool Validator::is_within_operating_hours(const char* ptr_time)
 }
 
 
+bool Validator::validate_age(int age)
+{
+    if(age <= 0)
+    {
+        throw InvalidInputException();
+    }
+
+}

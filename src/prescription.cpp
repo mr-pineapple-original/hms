@@ -97,7 +97,7 @@ std::ostream& operator<<(std::ostream& output, const Prescription& obj)
     return output;
 }
 
-int Prescription::get_prescription_id() const
+int Prescription::get_id() const
 {
     return m_prescription_id;
 }

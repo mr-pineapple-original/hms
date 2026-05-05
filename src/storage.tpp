@@ -1,4 +1,5 @@
-#include"storage.hpp"
+#pragma once
+
 #include"appointment.hpp"
 #include"char_array_functions.hpp"
 

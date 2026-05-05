@@ -10,10 +10,12 @@ class Validator
         static bool validate_id(int id);
         static bool validate_menu_choice(int choice, int min, int max);
         static bool validate_contact(const char* ptr_contact);
+        static bool validate_positive_int(int value);
         static bool validate_positive_float(float value);
         static bool validate_positive_double(double value);
         static bool validate_time_slot(const char* ptr_time_slot); // IDK how to know at what time slots the doctor is free at
         static bool is_within_operating_hours(const char* ptr_time_slot);
         static bool validate_time_format(const char* ptr_time_slot);
         static bool validate_date(const char* ptr_date);
+        static bool validate_age(int age);
 };

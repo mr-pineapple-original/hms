@@ -28,7 +28,7 @@ void resize_array(T* &ptr_arr, int size, int new_size)
     ptr_temp = nullptr;
 }
 
-void safe_get_line(char* &ptr_arr)
+inline void safe_get_line(char* &ptr_arr)
 {
     int size = DEFAULT_SIZE_CHAR_ARRAY;
     if(ptr_arr != nullptr)
@@ -57,7 +57,7 @@ void safe_get_line(char* &ptr_arr)
     // Check if the character array is empty or not
     if(*(ptr_arr + 0) == '\0')
     {
-        std::cout << "\n Name cannot be empty, try again \n";    
+        std::cout << "\n Text Field cannot be empty, try again \n";    
         safe_get_line(ptr_arr);
     }
 }
@@ -82,7 +82,7 @@ void copy_array(T* &ptr_arr, const T* ptr_arr_src, int size)
     }
 }
 
-int get_char_arr_size(const char* ptr_arr)
+inline int get_char_arr_size(const char* ptr_arr)
 {
     if(!ptr_arr) 
         return 0;
@@ -95,7 +95,7 @@ int get_char_arr_size(const char* ptr_arr)
     return length;
 }
 
-int get_char_arr_size(char* ptr_arr)
+inline int get_char_arr_size(char* ptr_arr)
 {
     if(!ptr_arr) 
         return 0;
@@ -108,7 +108,7 @@ int get_char_arr_size(char* ptr_arr)
     return length;
 }
 
-void add_null_character_in_array(char* &ptr_arr)
+inline void add_null_character_in_array(char* &ptr_arr)
 {
     if(!ptr_arr) return;
     
@@ -131,7 +131,7 @@ void add_null_character_in_array(char* &ptr_arr)
     }
 }
 
-bool is_cancelled(char* ptr_arr)
+inline bool is_cancelled(char* ptr_arr)
 {
     // I hope everyone of them have a null pointer at the end
     const char* cancelled = "cancelled";
@@ -155,7 +155,7 @@ bool is_cancelled(char* ptr_arr)
     return true;
 }
 
-bool is_cancelled(const char* ptr_arr)
+inline bool is_cancelled(const char* ptr_arr)
 {
     // I hope everyone of them have a null pointer at the end
     const char* cancelled = "cancelled";
@@ -180,7 +180,7 @@ bool is_cancelled(const char* ptr_arr)
 }
 
 
-char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
+inline char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
 {
     int size1 = get_char_arr_size(ptr_arr1);
     int size2 = get_char_arr_size(ptr_arr2);
@@ -212,7 +212,7 @@ char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
 }
 
 
-char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
+inline char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
 {
     int size1 = get_char_arr_size(ptr_arr1);
     int size2 = get_char_arr_size(ptr_arr2);
@@ -244,7 +244,7 @@ char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
 }
 
 
-bool is_char_arrays_equal(char* ptr_arr1, char* ptr_arr2)
+inline bool is_char_arrays_equal(char* ptr_arr1, char* ptr_arr2)
 {
     if(ptr_arr1 == nullptr || ptr_arr2 == nullptr)
     {
@@ -269,7 +269,7 @@ bool is_char_arrays_equal(char* ptr_arr1, char* ptr_arr2)
     return true;
 }
 
-bool is_char_arrays_equal(const char* ptr_arr1, const char* ptr_arr2)
+inline bool is_char_arrays_equal(const char* ptr_arr1, const char* ptr_arr2)
 {
     if(ptr_arr1 == nullptr || ptr_arr2 == nullptr)
     {

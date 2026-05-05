@@ -18,3 +18,5 @@ public:
     Entity* get_data(); // To send a modifyable pointer
     const Entity* get_data() const; // To send a non modifyable pointer
 };
+
+#include "storage.tpp"

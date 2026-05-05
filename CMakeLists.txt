@@ -10,14 +10,14 @@ find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 add_executable(apphms
 
     # BACKEND ! :D
-    src/main_sfml.cpp
+    src/main.cpp
     src/admin.cpp
     src/doctor.cpp
     src/patient.cpp
     src/person.cpp
     # src/char_array_functions.cpp
     # src/storage.tpp
-    src/apppointment.cpp
+    src/appointment.cpp
     src/bill.cpp
     src/file_handler.cpp
     src/parser.cpp
@@ -29,6 +29,7 @@ add_executable(apphms
     src/insufficient_funds_exception.cpp
     src/file_not_found_exception.cpp
     src/slot_unavailable_exception.cpp
+    src/hospital_system.cpp
 
     # FRONTEND :3
 

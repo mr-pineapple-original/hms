@@ -27,7 +27,7 @@ class Prescription
         bool operator==(const Prescription& obj) const;
         friend std::ostream& operator<<(std::ostream& output, const Prescription& obj);
 
-        int get_prescription_id() const;
+        int get_id() const;
         int get_appointment_id() const;
         int get_doctor_id() const;
 

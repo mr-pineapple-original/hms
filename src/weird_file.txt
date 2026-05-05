@@ -1,0 +1,3245 @@
+This is admin.hpp
+#include<iostream>
+#include"person.hpp"
+#pragma once
+
+class Admin : public Person
+{
+    public:
+        Admin();
+        Admin(int id, char* ptr_password);
+        Admin(const Admin& obj);
+
+        Admin& operator=(const Admin& obj);
+        
+        void display() override;
+        void menu() override;
+        bool authenticate(int id, char* ptr_password) const;
+        
+        friend std::ostream& operator<<(std::ostream& output, const Admin& obj);
+
+        ~Admin();
+};  
+
+
+This is admin.cpp
+#include<iostream>
+#include"admin.hpp"
+#include "char_array_functions.hpp"
+#include"invalid_input_exception.hpp"
+
+Admin::Admin() : Person()
+{
+    
+}
+
+Admin::Admin(int id, char* ptr_password)  : Person(id, ptr_password, "Unknown", male, 18)
+{
+    if(ptr_password == nullptr)
+        throw InvalidInputException();
+}
+
+Admin::Admin(const Admin& obj) : Person(obj)
+{
+
+}
+
+Admin& Admin::operator=(const Admin& obj)
+{
+    if(this != &obj)
+    {
+        // Manually calling the base abstract class (Person) operator 
+        Person::operator=(obj);
+    }
+    return *this;
+}
+
+void Admin::display() 
+{
+    std::cout << "Admin ID: " << m_id << "\n";
+    std::cout << "Name: " << m_ptr_name << "\n";
+}
+
+void Admin::menu() 
+{
+
+    int choice;
+
+    do
+    {
+        std::cout << "\n Admin Panel — MediCore \n";
+        std::cout << "1. Add Doctor \n";
+        std::cout << "2. Remove Doctor \n";
+        std::cout << "3. View All Patients \n";
+        std::cout << "4. View All Doctors \n";
+        std::cout << "5. View All Appointments \n";
+        std::cout << "6. View Unpaid Bills \n";
+        std::cout << "7. Discharge Patient \n";
+        std::cout << "8. View Security Log \n";
+        std::cout << "9. Generate Daily Report \n";
+        std::cout << "10. Logout \n";
+
+        std::cin >> choice;
+
+        // Still needs more work mate
+
+    } while (choice != 10);
+}
+
+bool Admin::authenticate(int id, char* ptr_password) const
+{
+    if(m_id != id)
+    {
+        return false;
+    }
+
+    if(ptr_password == nullptr)
+    {
+        throw InvalidInputException();
+    }
+
+    int size = get_char_arr_size(ptr_password);
+    int m_size = get_char_arr_size(m_ptr_password);
+    
+    if(size != m_size)
+    {
+        return false;
+    }
+
+    for(int i = 0; i < size; i++)
+    {
+        if(*(m_ptr_password + i) != *(ptr_password + i))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+std::ostream& operator<<(std::ostream& output, const Admin& obj)
+{
+    output << obj.get_id() << ","
+           << obj.get_name() << ","
+           << obj.get_password();
+
+    return output;
+}
+
+Admin::~Admin()
+{
+
+}
+
+This is appointment_service.hpp
+#include<iostream>
+
+#include"storage.hpp"
+#include"appointment.hpp"
+#include "char_array_functions.hpp"
+#include "slot_unavailable_exception.hpp"
+
+#pragma once
+
+bool is_slot_available(const Storage<Appointment>& appointments, int doctor_id, const char* date, const char* time);
+void book_appointment(Storage<Appointment>& appointments, const Appointment& new_appt);
+
+
+bool is_slot_available(const Storage<Appointment>& appointments, int doctor_id, const char* ptr_date, const char* ptr_time)
+{
+    const Appointment* data = appointments.get_data();
+
+    for (int i = 0; i < appointments.size(); i++)
+    {
+        const Appointment& appt = data[i];
+
+        if (appt.get_doctor_id() == doctor_id)
+        {
+            if (is_char_arrays_equal(appt.get_date(), ptr_date) &&
+                is_char_arrays_equal(appt.get_time(), ptr_time))
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+void book_appointment(Storage<Appointment>& appointments, const Appointment& new_appt)
+{
+    if (!is_slot_available(appointments, new_appt.get_doctor_id(), new_appt.get_date(), new_appt.get_time()))
+    {
+        throw SlotUnavailableException();
+    }
+
+    appointments.add(new_appt);
+}
+
+This is appointment.hpp
+#include<iostream>
+#pragma once
+
+class Appointment
+{
+    private:
+        int m_appointment_id;  
+        int m_patient_id;
+        int m_doctor_id;
+    
+        char* m_ptr_date;
+        char* m_ptr_time_slot;
+        char* m_ptr_status;
+
+        void set_date(char* ptr_date);
+        void set_time_slot(char* ptr_time_slot);
+        void set_status(char* ptr_status);
+
+    public:
+        Appointment();
+        Appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time_slot, char* ptr_status);
+        Appointment(const Appointment& obj);
+        
+        Appointment& operator=(const Appointment& obj);
+
+        bool operator==(const Appointment& obj) const;
+        friend std::ostream& operator<<(std::ostream& output, const Appointment& obj);
+
+        int get_id() const; // We cant name it get_appointment_id() cause of the template class Storage so we will make it get_id() to have a common interface
+        int get_doctor_id() const;
+        int get_patient_id() const;
+        char* get_date() const;
+        char* get_time() const;
+        char* get_status() const;
+
+
+        void set_appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time_slot, char* ptr_status);
+
+        ~Appointment();
+};
+
+
+This is appointment.cpp
+#include"appointment.hpp"
+#include"char_array_functions.hpp"
+#include"invalid_input_exception.hpp"
+#include"slot_unavailable_exception.hpp"
+#include"hospital_hours_violation_exception.hpp"
+#include"validator.hpp"
+
+Appointment::Appointment()
+{
+    m_appointment_id = 0;
+    m_patient_id = 0;
+    m_doctor_id = 0;
+
+    m_ptr_date = nullptr;
+    m_ptr_time_slot = nullptr;
+    m_ptr_status = nullptr;
+}
+
+Appointment::Appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time, char* ptr_status)
+{
+    m_appointment_id = appointment_id;
+    m_patient_id = patient_id;
+    m_doctor_id = doctor_id;
+
+    m_ptr_date = nullptr;
+    m_ptr_time_slot = nullptr;
+    m_ptr_status = nullptr;
+    
+    copy_array(m_ptr_date, ptr_date, get_char_arr_size(ptr_date) + 1);
+    copy_array(m_ptr_time_slot, ptr_time, get_char_arr_size(ptr_time) + 1);
+    copy_array(m_ptr_status, ptr_status, get_char_arr_size(ptr_status) + 1);
+}
+
+Appointment::Appointment(const Appointment& obj)
+{
+    m_appointment_id = obj.m_appointment_id;
+    m_patient_id = obj.m_patient_id;
+    m_doctor_id = obj.m_doctor_id;
+    
+    m_ptr_date = nullptr;
+    m_ptr_time_slot = nullptr;
+    m_ptr_status = nullptr;
+
+    copy_array(m_ptr_date, obj.m_ptr_date, get_char_arr_size(obj.m_ptr_date) + 1);
+    copy_array(m_ptr_time_slot, obj.m_ptr_time_slot, get_char_arr_size(obj.m_ptr_time_slot) + 1);
+    copy_array(m_ptr_status, obj.m_ptr_status, get_char_arr_size(obj.m_ptr_status) + 1);
+}
+
+Appointment& Appointment::operator=(const Appointment& obj)
+{
+    if (this != &obj)
+    {
+        m_appointment_id = obj.m_appointment_id;
+        m_patient_id = obj.m_patient_id;
+        m_doctor_id = obj.m_doctor_id;
+        
+        m_ptr_date = nullptr;
+        m_ptr_time_slot = nullptr;
+        m_ptr_status = nullptr;
+
+        copy_array(m_ptr_date, obj.m_ptr_date, get_char_arr_size(obj.m_ptr_date) + 1);
+        copy_array(m_ptr_time_slot, obj.m_ptr_time_slot, get_char_arr_size(obj.m_ptr_time_slot) + 1);
+        copy_array(m_ptr_status, obj.m_ptr_status, get_char_arr_size(obj.m_ptr_status) + 1);
+    }
+    return *this;
+}
+
+bool Appointment::operator==(const Appointment& obj) const
+{
+    if (m_doctor_id != obj.m_doctor_id)
+        return false;
+
+    int size1 = get_char_arr_size(m_ptr_date);
+    int size2 = get_char_arr_size(obj.m_ptr_date);
+
+    if (size1 != size2)
+        return false;
+
+    for (int i = 0; i < size1; i++)
+    {
+        if (*(m_ptr_date + i) != *(obj.m_ptr_date + i))
+            return false;
+    }
+
+    int t1 = get_char_arr_size(m_ptr_time_slot);
+    int t2 = get_char_arr_size(obj.m_ptr_time_slot);
+
+    if (t1 != t2)
+        return false;
+
+    for (int i = 0; i < t1; i++)
+    {
+        if (*(m_ptr_time_slot + i) != *(obj.m_ptr_time_slot + i))
+            return false;
+    }
+
+
+    if(is_cancelled(m_ptr_status) || is_cancelled(obj.m_ptr_status))
+    {
+        return false;
+    }
+
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& output, const Appointment& obj)
+{
+    output << obj.m_appointment_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_doctor_id << ",";
+    output << obj.m_ptr_date << ",";
+    output << obj.m_ptr_time_slot << ",";
+    output << obj.m_ptr_status;
+
+    return output;
+}
+
+int Appointment::get_id() const
+{
+    return m_appointment_id;
+}
+
+int Appointment::get_doctor_id() const
+{
+    return m_doctor_id;
+}
+
+int Appointment::get_patient_id() const
+{
+    return m_patient_id;
+}
+
+char* Appointment::get_date() const
+{
+    return m_ptr_date;
+}
+
+char* Appointment::get_time() const
+{
+    return m_ptr_time_slot;
+}
+
+char* Appointment::get_status() const
+{
+    return m_ptr_status;
+}
+
+void Appointment::set_date(char* ptr_date)
+{
+    if(m_ptr_date != nullptr)
+        delete[] m_ptr_date;
+
+    m_ptr_date = nullptr;
+    int size = get_char_arr_size(ptr_date);
+    copy_array(m_ptr_date, ptr_date, size + 1);
+}
+
+void Appointment::set_time_slot(char* ptr_time_slot)
+{
+    if(ptr_time_slot == nullptr)
+        throw InvalidInputException();
+
+    if(!Validator::validate_time_format(ptr_time_slot))
+    {
+        throw InvalidInputException();
+    }
+
+    if(!Validator::is_within_operating_hours(ptr_time_slot))
+    {
+        throw HospitalHoursViolationException();
+    }
+
+    if(m_ptr_time_slot != nullptr)
+        delete[] m_ptr_time_slot;
+
+    m_ptr_time_slot = nullptr;
+    copy_array(m_ptr_time_slot, ptr_time_slot, get_char_arr_size(ptr_time_slot) + 1);
+}
+
+void Appointment::set_status(char* ptr_status)
+{
+    if(m_ptr_status != nullptr)
+        delete[] m_ptr_status;
+
+    m_ptr_status = nullptr;
+    copy_array(m_ptr_status, ptr_status, get_char_arr_size(ptr_status) + 1);
+}
+
+void Appointment::set_appointment(int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_time_slot, char* ptr_status)
+{
+    m_appointment_id = appointment_id;
+    m_patient_id = patient_id;
+    m_doctor_id = doctor_id;
+
+    set_date(ptr_date);
+    set_time_slot(ptr_time_slot);
+    set_status(ptr_status);
+
+}
+
+Appointment::~Appointment()
+{
+    delete[] m_ptr_date;
+    delete[] m_ptr_status;
+    delete[] m_ptr_time_slot;
+
+    m_ptr_date = nullptr;
+    m_ptr_status = nullptr;
+    m_ptr_time_slot = nullptr;
+}
+
+This is bill.hpp
+#include <iostream>
+#pragma once
+
+class Bill
+{
+    private:
+        int m_bill_id;
+        int m_patient_id;
+        int m_appointment_id;
+    
+        double m_amount;
+
+        char* m_ptr_status;   // paid / unpaid / cancelled
+        char* m_ptr_date;
+
+        void set_status(char* ptr_status);
+        void set_date(char* ptr_date);
+
+    public:
+        Bill();
+        Bill(int bill_id, int patient_id, int appointment_id, double amount, char* ptr_status, char* ptr_date);
+        Bill(const Bill& obj);
+        
+        Bill& operator=(const Bill& obj);
+
+        bool operator==(const Bill& obj) const;
+        friend std::ostream& operator<<(std::ostream& output, const Bill& obj);
+
+        int get_id() const; // We cant name it get_bill_id() cause of the template class Storage so we will make it get_id() to have a common interface
+        int get_patient_id() const;
+        int get_appointment_id() const;
+        double get_amount() const;
+        char* get_status() const;
+        char* get_date() const;
+
+
+        void set_bill(int bill_id, int patient_id, int appointment_id, double amount, char* ptr_status, char* ptr_date);
+
+        ~Bill();
+};
+
+
+This is bill.cpp
+#include "bill.hpp"
+#include"char_array_functions.hpp"
+
+Bill::Bill()
+{
+    m_bill_id = 0;
+    m_patient_id = 0;
+    m_appointment_id = 0;
+    m_amount = 0.0;
+
+    m_ptr_status = nullptr;
+    m_ptr_date = nullptr;
+}
+
+Bill::Bill(int bill_id, int patient_id, int appointment_id, double amount, char* ptr_status, char* ptr_date)
+{
+    m_bill_id = bill_id;
+    m_patient_id = patient_id;
+    m_appointment_id = appointment_id;
+    m_amount = amount;
+
+    m_ptr_status = nullptr;
+    m_ptr_date = nullptr;
+
+    copy_array(m_ptr_status, ptr_status, get_char_arr_size(ptr_status) + 1);
+    copy_array(m_ptr_date, ptr_date, get_char_arr_size(ptr_date) + 1);
+}
+
+Bill::Bill(const Bill& obj)
+{
+    m_bill_id = obj.m_bill_id;
+    m_patient_id = obj.m_patient_id;
+    m_appointment_id = obj.m_appointment_id;
+    m_amount = obj.m_amount;
+
+    m_ptr_status = nullptr;
+    m_ptr_date = nullptr;
+
+    copy_array(m_ptr_status, obj.m_ptr_status, get_char_arr_size(obj.m_ptr_status) + 1);
+    copy_array(m_ptr_date, obj.m_ptr_date, get_char_arr_size(obj.m_ptr_date) + 1);
+}
+
+Bill& Bill::operator=(const Bill& obj)
+{
+    if (this != &obj)
+    {
+        m_bill_id = obj.m_bill_id;
+        m_patient_id = obj.m_patient_id;
+        m_appointment_id = obj.m_appointment_id;
+        m_amount = obj.m_amount;
+
+        if (m_ptr_status != nullptr) 
+            delete[] m_ptr_status;
+        if (m_ptr_date != nullptr) 
+            delete[] m_ptr_date;
+
+        m_ptr_status = nullptr;
+        m_ptr_date = nullptr;
+
+        copy_array(m_ptr_status, obj.m_ptr_status, get_char_arr_size(obj.m_ptr_status) + 1);
+        copy_array(m_ptr_date, obj.m_ptr_date, get_char_arr_size(obj.m_ptr_date) + 1);
+    }
+    return *this;
+}
+
+bool Bill::operator==(const Bill& obj) const
+{
+    if(m_bill_id != obj.m_bill_id)
+    {
+        return false;
+    }
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& output, const Bill& obj)
+{
+    output << obj.m_bill_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_appointment_id << ",";
+    output << obj.m_amount << ",";
+    output << obj.m_ptr_status << ",";
+    output << obj.m_ptr_date;
+    return output;
+}
+
+void Bill::set_status(char* ptr_status)
+{
+    if (m_ptr_status != nullptr) 
+        delete[] m_ptr_status;
+    
+    m_ptr_status = nullptr;
+    copy_array(m_ptr_status, ptr_status, get_char_arr_size(ptr_status) + 1);
+}
+
+void Bill::set_date(char* ptr_date)
+{
+    if (m_ptr_date != nullptr) 
+        delete[] m_ptr_date;
+
+    m_ptr_date = nullptr;
+    copy_array(m_ptr_date, ptr_date, get_char_arr_size(ptr_date) + 1);
+}
+
+void Bill::set_bill(int bill_id, int patient_id, int appointment_id, double amount, char* ptr_status, char* ptr_date)
+{
+    m_bill_id = bill_id;
+    m_patient_id = patient_id;
+    m_appointment_id = appointment_id;
+    m_amount = amount;
+
+    set_status(ptr_status);
+    set_date(ptr_date);
+}
+
+
+int Bill::get_id() const 
+{ 
+    return m_bill_id; 
+}
+
+int Bill::get_patient_id() const 
+{ 
+    return m_patient_id; 
+}
+
+int Bill::get_appointment_id() const 
+{ 
+    return m_appointment_id; 
+}
+
+double Bill::get_amount() const 
+{ 
+    return m_amount;
+}
+
+char* Bill::get_status() const 
+{ 
+    return m_ptr_status;
+}
+
+char* Bill::get_date() const 
+{ 
+    return m_ptr_date;
+}
+
+Bill::~Bill()
+{
+    delete[] m_ptr_status;
+    delete[] m_ptr_date;
+
+    m_ptr_status = nullptr;
+    m_ptr_date = nullptr;
+}
+
+This is char_array_functions.hpp
+#include <iostream>
+#pragma once
+
+static const long CLEAR_BUFFER = 10000000;
+static const int DEFAULT_SIZE_CHAR_ARRAY = 100;
+
+template <typename T>
+void resize_array(T* &ptr_arr, int size, int new_size)
+{
+    T* ptr_temp = new T[new_size];
+
+    if(new_size <= size)
+    {
+        for(int i = 0; i < new_size; i++)
+        {
+            *(ptr_temp + i) = *(ptr_arr + i);
+        }
+    }
+    else
+    {
+        for(int i = 0; i < size; i++)
+        {
+            *(ptr_temp + i) = *(ptr_arr + i);
+        }
+    }
+    delete[] ptr_arr;
+    ptr_arr = ptr_temp;
+    ptr_temp = nullptr;
+}
+
+void safe_get_line(char* &ptr_arr)
+{
+    int size = DEFAULT_SIZE_CHAR_ARRAY;
+    if(ptr_arr != nullptr)
+        delete[] ptr_arr;
+
+    ptr_arr = new char[size];
+
+    std::cin.clear();
+    std::cin.getline(ptr_arr, size);
+
+    while(std::cin.fail())
+    {
+        std::cin.clear();
+        std::cin.ignore(CLEAR_BUFFER, '\n');
+
+        int new_size = size * 2;
+        resize_array(ptr_arr, size, new_size);
+        size = new_size;
+
+        std::cout << "\n Please let us use strings :(";
+        std::cout << "\n Sorry the input is too long, please enter again:\n";
+
+        std::cin.getline(ptr_arr, size);
+    }
+
+    // Check if the character array is empty or not
+    if(*(ptr_arr + 0) == '\0')
+    {
+        std::cout << "\n Name cannot be empty, try again \n";    
+        safe_get_line(ptr_arr);
+    }
+}
+
+template <typename T>
+void copy_array(T* &ptr_arr, const T* ptr_arr_src, int size)
+{
+    if(ptr_arr != nullptr)
+        delete[] ptr_arr;
+
+    ptr_arr = new T[size];
+
+    for(int i = 0; i < size; i++)
+    {
+        *(ptr_arr + i) = *(ptr_arr_src + i);
+        
+        if(*(ptr_arr_src + i) == '\0')
+        {
+            *(ptr_arr + i) = '\0';
+            break;
+        }    
+    }
+}
+
+int get_char_arr_size(const char* ptr_arr)
+{
+    if(!ptr_arr) 
+        return 0;
+    
+    int length = 0;
+    for(int i = 0; *(ptr_arr + i) != '\0'; i++)
+    {
+        length++;
+    }
+    return length;
+}
+
+int get_char_arr_size(char* ptr_arr)
+{
+    if(!ptr_arr) 
+        return 0;
+    
+    int length = 0;
+    for(int i = 0; *(ptr_arr + i) != '\0'; i++)
+    {
+        length++;
+    }
+    return length;
+}
+
+void add_null_character_in_array(char* &ptr_arr)
+{
+    if(!ptr_arr) return;
+    
+    int size = get_char_arr_size(ptr_arr);
+    bool flag = false;
+    
+    for(int i = 0; i < size; i++)
+    {
+        if(*(ptr_arr + i) == '\0')
+        {
+            flag = true;
+            break;
+        }
+    }
+
+    if(!flag)
+    {
+        resize_array(ptr_arr, size, size + 1);
+        *(ptr_arr + size) = '\0';
+    }
+}
+
+bool is_cancelled(char* ptr_arr)
+{
+    // I hope everyone of them have a null pointer at the end
+    const char* cancelled = "cancelled";
+
+    int last_char = 0;
+    for(int i = 0; cancelled[i] != '\0'; i++)
+    {
+        if(*(ptr_arr + i) != cancelled[i])
+        {
+            return false;
+        }
+        last_char++;
+    }
+
+    if(*(ptr_arr + last_char) != '\0')
+    {
+        return false;
+    }
+
+    // If they are cancelled it will return true
+    return true;
+}
+
+bool is_cancelled(const char* ptr_arr)
+{
+    // I hope everyone of them have a null pointer at the end
+    const char* cancelled = "cancelled";
+
+    int last_char = 0;
+    for(int i = 0; cancelled[i] != '\0'; i++)
+    {
+        if(*(ptr_arr + i) != cancelled[i])
+        {
+            return false;
+        }
+        last_char++;
+    }
+
+    if(*(ptr_arr + last_char) != '\0')
+    {
+        return false;
+    }
+
+    // If they are cancelled it will return true
+    return true;
+}
+
+
+char* concatenate_char_array(char* ptr_arr1, char* ptr_arr2)
+{
+    int size1 = get_char_arr_size(ptr_arr1);
+    int size2 = get_char_arr_size(ptr_arr2);
+
+    if( ptr_arr1 == nullptr || ptr_arr2 == nullptr)
+    {
+        return nullptr;
+    }
+
+    int total_size = size1 + size2 + 1; // For '\0' in the end
+    char* ptr_result = new char[total_size];
+
+    int it = 0;
+
+    for(int i = 0; i < size1; i++)
+    {
+        *(ptr_result + it) = *(ptr_arr1 + i);
+        it++;
+    }
+
+    for(int i = 0; i < size2; i++)
+    {
+        *(ptr_result + it) = *(ptr_arr2 + i);
+        it++;
+    }
+
+    *(ptr_result + it) = '\0';
+    return ptr_result;
+}
+
+
+char* concatenate_char_array(const char* ptr_arr1, const char* ptr_arr2)
+{
+    int size1 = get_char_arr_size(ptr_arr1);
+    int size2 = get_char_arr_size(ptr_arr2);
+
+    if( ptr_arr1 == nullptr || ptr_arr2 == nullptr)
+    {
+        return nullptr;
+    }
+
+    int total_size = size1 + size2 + 1; // For '\0' in the end
+    char* ptr_result = new char[total_size];
+
+    int it = 0;
+
+    for(int i = 0; i < size1; i++)
+    {
+        *(ptr_result + it) = *(ptr_arr1 + i);
+        it++;
+    }
+
+    for(int i = 0; i < size2; i++)
+    {
+        *(ptr_result + it) = *(ptr_arr2 + i);
+        it++;
+    }
+
+    *(ptr_result + it) = '\0';
+    return ptr_result;
+}
+
+
+bool is_char_arrays_equal(char* ptr_arr1, char* ptr_arr2)
+{
+    if(ptr_arr1 == nullptr || ptr_arr2 == nullptr)
+    {
+        return false;
+    }
+
+    int size1 = get_char_arr_size(ptr_arr1);
+    int size2 = get_char_arr_size(ptr_arr2);
+    
+    if(size1  != size2)
+    {
+        return false;
+    }
+
+    for(int i = 0; *(ptr_arr1 + i) != '\0'; i++)
+    {
+        if( *(ptr_arr1 + i) != *(ptr_arr2 + i))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool is_char_arrays_equal(const char* ptr_arr1, const char* ptr_arr2)
+{
+    if(ptr_arr1 == nullptr || ptr_arr2 == nullptr)
+    {
+        return false;
+    }
+
+    int size1 = get_char_arr_size(ptr_arr1);
+    int size2 = get_char_arr_size(ptr_arr2);
+    
+    if(size1  != size2)
+    {
+        return false;
+    }
+
+    for(int i = 0; *(ptr_arr1 + i) != '\0'; i++)
+    {
+        if( *(ptr_arr1 + i) != *(ptr_arr2 + i))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+This is doctor.hpp
+#include<iostream>
+#include"person.hpp"
+#pragma once
+
+class Doctor : public Person
+{
+private:
+    double m_fee;
+    
+    char* m_ptr_specialization;
+    char* m_ptr_contact;
+    
+
+public:
+    Doctor();
+    Doctor(int id, char* password, char* name, const char* gender, int age, char* specialization, char* contact, double fee);
+    Doctor(const Doctor& obj);
+    Doctor& operator=(const Doctor& obj);
+
+    bool operator==(const Doctor& obj) const;
+
+    friend std::istream& operator>>(std::istream& input, Doctor& obj);
+    friend std::ostream& operator<<(std::ostream& output, const Doctor& obj);
+
+    void display() override;
+    void menu() override;
+
+    char* get_specialization() const;
+    char* get_contact() const;
+    double get_fee() const;
+
+    ~Doctor();
+};
+
+
+This is doctor.cpp
+#include "doctor.hpp"
+#include "char_array_functions.hpp"
+
+Doctor::Doctor() : Person()
+{
+    m_ptr_specialization = nullptr;
+    m_ptr_contact = nullptr;
+    m_fee = 0.0;
+}
+
+Doctor::Doctor(int id, char* password, char* name, const char* gender, int age, char* specialization, char* contact, double fee) : Person(id, password, name, gender, age)
+{
+    m_ptr_specialization = nullptr;
+    m_ptr_contact = nullptr;
+
+    int spec_size = get_char_arr_size(specialization);
+    copy_array(m_ptr_specialization, specialization, spec_size + 1);
+
+    int contact_size = get_char_arr_size(contact);
+    copy_array(m_ptr_contact, contact, contact_size + 1);
+
+    m_fee = fee;
+}
+
+Doctor::Doctor(const Doctor& obj) : Person(obj)
+{
+    m_ptr_specialization = nullptr;
+    m_ptr_contact = nullptr;
+
+    int spec_size = get_char_arr_size(obj.m_ptr_specialization);
+    copy_array(m_ptr_specialization, obj.m_ptr_specialization, spec_size + 1);
+
+    int contact_size = get_char_arr_size(obj.m_ptr_contact);
+    copy_array(m_ptr_contact, obj.m_ptr_contact, contact_size + 1);
+
+    m_fee = obj.m_fee;
+}
+
+Doctor& Doctor::operator=(const Doctor& obj)
+{
+    if (this != &obj)
+    {
+        // Manually calling the base abstract class (Person) operator 
+        Person::operator=(obj);
+
+        if(m_ptr_specialization != nullptr)
+        delete[] m_ptr_specialization;
+
+        m_ptr_specialization = nullptr;
+
+        int spec_size = get_char_arr_size(obj.m_ptr_specialization);
+        copy_array(m_ptr_specialization, obj.m_ptr_specialization, spec_size + 1);
+
+        if(m_ptr_contact != nullptr)
+        delete[] m_ptr_contact;
+        
+        m_ptr_contact = nullptr;
+
+        int contact_size = get_char_arr_size(obj.m_ptr_contact);
+        copy_array(m_ptr_contact, obj.m_ptr_contact, contact_size + 1);
+
+        m_fee = obj.m_fee;
+    }
+    return *this;
+}
+
+Doctor::~Doctor()
+{
+    delete[] m_ptr_specialization;
+    delete[] m_ptr_contact;
+
+    m_ptr_specialization = nullptr;
+    m_ptr_contact = nullptr;
+}
+
+bool Doctor::operator==(const Doctor& obj) const
+{
+    if(m_id == obj.m_id)
+    {
+        return true;
+    }
+
+    else
+    {
+        return false;
+    }
+
+}
+
+std::istream& operator>>(std::istream& input, Doctor& obj)
+{
+    std::cout << "Enter Name: \n";
+    safe_get_line(obj.m_ptr_name);
+
+    std::cout << "Enter Password: \n";
+    safe_get_line(obj.m_ptr_password);
+
+    std::cout << "Enter Specialization: \n";
+    safe_get_line(obj.m_ptr_specialization);
+
+    std::cout << "Enter Contact: \n";
+    safe_get_line(obj.m_ptr_contact);
+
+    std::cout << "Enter Age: \n";
+    input >> obj.m_age;
+
+    std::cout << "Enter Gender (M/F) either M or F:\n";
+    char temp;
+    input >> temp;
+
+    if(temp == 'M' || temp == 'm')
+    {
+        obj.m_gender = male;
+    }
+
+    if(temp == 'F' || temp == 'f')
+    {
+        obj.m_gender = female;
+    }
+
+    std::cout << "Enter Fee:\n";
+    input >> obj.m_fee;
+
+    return input;
+}
+
+std::ostream& operator<<(std::ostream& output, const Doctor& obj)
+{
+    output << obj.m_id << ",";
+    output << obj.m_ptr_name << ",";
+    output << obj.m_ptr_specialization << ",";
+    output << obj.m_ptr_contact << ",";
+    output << obj.m_ptr_password << ",";
+    output << obj.m_fee;
+    return output;
+}
+
+void Doctor::display() 
+{
+    std::cout << *this; // It will call << overload  I know very weird to have 2 ways to display it right
+}
+
+void Doctor::menu()
+{
+    std::cout << "\n Doctor Menu \n";
+    std::cout << "1. View Today's Appointments \n";
+    std::cout << "2. Mark Appointment Complete \n";
+    std::cout << "3. Mark No-Show \n";
+    std::cout << "4. Write Prescription \n";
+    std::cout << "5. View Patient History \n";
+    std::cout << "6. Logout \n";
+}
+
+char* Doctor::get_specialization() const
+{
+    return m_ptr_specialization;
+}
+
+char* Doctor::get_contact() const
+{
+    return m_ptr_contact;
+}
+
+double Doctor::get_fee() const
+{
+    return m_fee;
+}
+
+This is file_handler.hpp
+
+#include<iostream>
+#include<fstream>
+#include<cstdio>
+#pragma once
+
+#include"storage.hpp"
+#include"patient.hpp"
+#include"doctor.hpp"
+#include"admin.hpp"
+#include"appointment.hpp"
+#include"bill.hpp"
+#include"prescription.hpp"
+
+// We are gonna make it a static utility class
+class FileHandler
+{
+    private:
+        // Completely rewrite data in a file by making a temp file and then renaming it and reading from the storage ( It is the helper function that will be used in all the update functions )
+        template<typename Entity>
+        static void rewrite_file(const Storage<Entity>& entity, const char* ptr_file_name);
+    
+    public:
+        // Loading is to read data from the file and add them into the storage 
+        static void load_patients(Storage<Patient>& patients, const char* ptr_file_name);
+        static void load_admins(Storage<Admin>& admins, const char* ptr_file_name);
+        static void load_appointments(Storage<Appointment>& appointments, const char* ptr_file_name);
+        static void load_bills(Storage<Bill>& bills, const char* ptr_file_name);
+        static void load_doctors(Storage<Doctor>& doctors, const char* ptr_file_name);
+        static void load_prescriptions(Storage<Prescription>& prescriptions, const char* ptr_file_name);
+
+        // Appending is to read data from the object and append them into the file
+        static void append_patient(const Patient& patient, const char* ptr_file_name);
+        static void append_admin(const Admin& admin, const char* ptr_file_name);
+        static void append_appointment(const Appointment& appointment, const char* ptr_file_name);
+        static void append_bill(const Bill& bill, const char* ptr_file_name);
+        static void append_doctor(const Doctor& doctor, const char* ptr_file_name);
+        static void append_prescription(const Prescription& prescription, const char* ptr_file_name);
+
+        // Updating is to read from the storage and updating the records in the file
+        static void update_patients(const Storage<Patient>& patients, const char* ptr_file_name);
+        static void update_admins(const Storage<Admin>& admins, const char* ptr_file_name);
+        static void update_appointments(const Storage<Appointment>& appointments, const char* ptr_file_name);
+        static void update_bills(const Storage<Bill>& bills, const char* ptr_file_names);
+        static void update_doctors(const Storage<Doctor>& doctors, const char* ptr_file_names);
+        static void update_prescriptions(const Storage<Prescription>& prescriptions, const char* ptr_file_names);
+
+        // Generating new id that can be used by reading from the storage and returning + 1 of the last id
+        template<typename Entity>
+        static int generate_new_id(const Storage<Entity>& entity);
+
+        static bool validate_patient(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_doctor(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
+        static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
+
+        static void log_security_attempt(const char* role, int entered_id, const char* result);
+};  
+
+This is file_handle.cpp
+
+#include"file_handler.hpp"
+#include"parser.hpp"
+#include"char_array_functions.hpp"
+#include"person.hpp"
+#include"file_not_found_exception.hpp"
+
+template<typename Entity>
+void FileHandler::rewrite_file(const Storage<Entity>& entity, const char* ptr_file_name)
+{
+    // We had to do it to avoid multiple temp.txt named files
+    const char* prefix = "temp_";
+    char* ptr_temp_name = concatenate_char_array(prefix, ptr_file_name);
+    std::ofstream fout(ptr_temp_name);
+
+    if(!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    const Entity* ptr_entity = entity.get_data();
+
+    for(int i = 0; i < entity.size(); i++)
+    {
+        fout << *(ptr_entity + i) << std::endl;
+    }
+
+    fout.close();
+
+    remove(ptr_file_name);
+    rename(ptr_temp_name, ptr_file_name);
+
+    delete[] ptr_temp_name;
+    ptr_temp_name = nullptr;
+}
+
+template<typename Entity>
+int FileHandler::generate_new_id(const Storage<Entity>& entity)
+{
+    int max_id = 0;
+    const Entity* ptr_entity = entity.get_data();
+
+    for(int i = 0; i < entity.size(); i++)
+    {
+        if(max_id < (*(ptr_entity + i)).get_id())
+        {
+            max_id = (*(ptr_entity + i)).get_id();
+        }
+    }
+    max_id = max_id + 1;
+    return max_id;
+}
+
+// The reason we cant put the loaders in the template is because the constructors of admin, doctor, prescription etc require different parameters :/
+
+void FileHandler::load_patients(Storage<Patient>& patients, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+
+    if (!fin)
+    {
+        throw FileNotFoundException();
+    }
+
+        while (true)
+    {
+        
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+
+        int i = 0;
+        char ch;
+
+        // reading the line manually
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+        {
+            delete[] ptr_line;
+            ptr_line = nullptr;
+            break;
+        }
+
+        *(ptr_line + i) = '\0';
+
+
+        // We are gonna parse it line by line using character arrays and no built in functions or anything cause FAST hates me :(
+        int index = 0;
+
+        int id;
+        int age;
+        float balance;
+
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_gender = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_contact = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_name);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_int(ptr_line, index, age);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_gender);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_contact);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_password);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_float(ptr_line, index, balance);
+
+        Patient obj(id, ptr_password, ptr_name, ptr_gender, age, ptr_contact, balance);;
+
+        patients.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_name;
+        delete[] ptr_contact;
+        delete[] ptr_password;
+
+        ptr_line = nullptr;
+        ptr_name = nullptr;
+        ptr_contact = nullptr;
+        ptr_password = nullptr;
+    }
+
+    fin.close();
+}
+
+void FileHandler::load_prescriptions(Storage<Prescription>& prescriptions, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+    if (!fin) {
+        throw FileNotFoundException();
+    }
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        // read line manually
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+            ptr_line[i++] = ch;
+        }
+
+        if (i == 0 && fin.eof()) {
+            delete[] ptr_line;
+            break;
+        }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int prescription_id;
+        int patient_id;
+        int appointment_id;
+        int doctor_id;
+
+        char* ptr_date = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_medicine = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_note = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, prescription_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, appointment_id);  Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, patient_id);      Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, doctor_id);       Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_date);     Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_medicine); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_note);
+
+        Prescription obj(prescription_id, appointment_id, patient_id, doctor_id,
+                 ptr_date, ptr_medicine, ptr_note); 
+                 
+        prescriptions.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_date;
+        delete[] ptr_medicine;
+        delete[] ptr_note;
+    }
+
+    fin.close();
+}
+
+
+
+void FileHandler::load_admins(Storage<Admin>& admins, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+
+    if (!fin)
+    {
+        throw FileNotFoundException();
+    }
+
+    while (true)
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+
+        int i = 0;
+        char ch;
+
+        // reading the line manually
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+        {
+            delete[] ptr_line;
+            break;
+        }
+
+        *(ptr_line + i) = '\0';
+
+
+        // We are gonna parse it line by line using character arrays and no built in functions or anything cause FAST hates me :(
+        int index = 0;
+
+        int id;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];   // parsed but ignored cause the admin constructor does not require it
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_name);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_password);
+
+        Admin obj(id, ptr_password);
+        admins.add(obj);
+
+
+        delete[] ptr_line;
+        delete[] ptr_name;
+        delete[] ptr_password;
+
+        ptr_line = nullptr;
+        ptr_name = nullptr;
+        ptr_password = nullptr;
+    }
+
+    fin.close();
+}
+
+void FileHandler::load_appointments(Storage<Appointment>& appointments, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+
+    if (!fin)
+    {
+        throw FileNotFoundException();
+    }
+
+    while (true)
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+
+        int i = 0;
+        char ch;
+
+        // reading the line manually
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+        {
+            delete[] ptr_line;
+            break;
+        }
+
+        *(ptr_line + i) = '\0';
+
+        // We are gonna parse it line by line using character arrays and no built in functions or anything cause FAST hates me :(
+        int index = 0;
+
+        int appointment_id;
+        int patient_id;
+        int doctor_id;
+
+        char* ptr_date = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_time = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_status = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, appointment_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_int(ptr_line, index, patient_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_int(ptr_line, index, doctor_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_date);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_time);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_status);
+
+
+        Appointment obj(appointment_id, patient_id, doctor_id, ptr_date, ptr_time, ptr_status);
+
+        appointments.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_date;
+        delete[] ptr_time;
+        delete[] ptr_status;
+
+        ptr_line = nullptr;
+        ptr_date = nullptr;
+        ptr_time = nullptr;
+        ptr_status = nullptr;
+    }
+
+    fin.close();
+}
+
+void FileHandler::load_bills(Storage<Bill>& bills, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+
+    if (!fin)
+    {
+        throw FileNotFoundException();
+    }
+
+    while (true)
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+
+        int i = 0;
+        char ch;
+
+        // reading the line manually
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+        {
+            delete[] ptr_line;
+            ptr_line = nullptr;
+            break;
+        }
+
+        *(ptr_line + i) = '\0';
+
+        // We are gonna parse it line by line using character arrays and no built in functions or anything cause FAST hates me :(
+        int index = 0;
+
+        int bill_id;
+        int patient_id;
+        int appointment_id;
+        double amount;
+
+        char* ptr_status = nullptr;
+        char* ptr_date = nullptr;
+
+        Parser::parse_int(ptr_line, index, bill_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_int(ptr_line, index, patient_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_int(ptr_line, index, appointment_id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_double(ptr_line, index, amount);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_status);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_date);
+
+
+        Bill obj(bill_id, patient_id, appointment_id, amount, ptr_status, ptr_date);
+
+        bills.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_status;
+        delete[] ptr_date;
+
+        ptr_line = nullptr;
+        ptr_status = nullptr;
+        ptr_date = nullptr;
+    }
+
+    fin.close();
+}
+
+void FileHandler::load_doctors(Storage<Doctor>& doctors, const char* ptr_file_name)
+{
+    std::ifstream fin(ptr_file_name);
+
+    if (!fin)
+    {
+        throw FileNotFoundException();
+    }
+
+    while (true)
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+
+        int i = 0;
+        char ch;
+
+        // manually reading the line
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+        {
+            delete[] ptr_line;
+            ptr_line = nullptr;
+            break;
+        }
+
+        *(ptr_line + i) = '\0';
+
+        // We are gonna parse it line by line using character arrays and no built in functions or anything cause FAST hates me :(
+        int index = 0;
+
+        int id;
+        double fee;
+
+        char* ptr_name = nullptr;
+        char* ptr_specialization = nullptr;
+        char* ptr_contact = nullptr;
+        char* ptr_password = nullptr;
+
+        Parser::parse_int(ptr_line, index, id);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_name);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_specialization);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_contact);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_string(ptr_line, index, ptr_password);
+        Parser::skip_comma(ptr_line, index);
+
+        Parser::parse_double(ptr_line, index, fee);
+
+        // Where the hell is this going on
+        // For some reason we have gender and age stored in the class instances but we dont have them in the file
+        // If I add them in my file my TA will cut marks :(
+        const char* ptr_gender = male; // We should have 
+        int default_age = 18;
+
+        Doctor obj(id, ptr_password, ptr_name,ptr_gender, default_age, ptr_specialization, ptr_contact,fee);
+
+        doctors.add(obj);
+
+        delete[] ptr_line;
+        delete[] ptr_name;
+        delete[] ptr_specialization;
+        delete[] ptr_contact;
+        delete[] ptr_password;
+
+        ptr_line = nullptr;
+        ptr_name = nullptr;
+        ptr_specialization = nullptr;
+        ptr_contact = nullptr;
+        ptr_password = nullptr;
+    }
+
+    fin.close();
+}
+
+// I think it could have been done with a template skull:emoji
+
+void FileHandler::append_patient(const Patient& patient, const char* ptr_name)
+{
+    std::ofstream fout(ptr_name, std::ios::app);
+    if(!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << patient << std::endl;
+    fout.close();
+}
+
+void FileHandler::append_admin(const Admin& admin, const char* ptr_file_name)
+{
+    std::ofstream fout(ptr_file_name, std::ios::app);
+
+    if (!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << admin << std::endl;
+
+    fout.close();
+}
+
+void FileHandler::append_appointment(const Appointment& appointment, const char* ptr_file_name)
+{
+    std::ofstream fout(ptr_file_name, std::ios::app);
+
+    if (!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << appointment << std::endl;
+
+    fout.close();
+}
+
+void FileHandler::append_bill(const Bill& bill, const char* ptr_file_name)
+{
+    std::ofstream fout(ptr_file_name, std::ios::app);
+
+    if (!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << bill << std::endl;
+
+    fout.close();
+}
+
+void FileHandler::append_doctor(const Doctor& doctor, const char* ptr_file_name)
+{
+    std::ofstream fout(ptr_file_name, std::ios::app);
+
+    if (!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << doctor << std::endl;
+
+    fout.close();
+}
+
+void FileHandler::append_prescription(const Prescription& prescription, const char* ptr_file_name)
+{
+    std::ofstream fout(ptr_file_name, std::ios::app);
+
+    if (!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    fout << prescription << std::endl;
+
+    fout.close();
+}
+
+// This could also have been done with templates skull:emoji
+
+void FileHandler::update_admins(const Storage<Admin>& admins, const char* ptr_file_name)
+{
+    rewrite_file(admins, ptr_file_name);
+}
+
+void FileHandler::update_appointments(const Storage<Appointment>& appointments, const char* ptr_file_name)
+{
+    rewrite_file(appointments, ptr_file_name);
+}
+
+void FileHandler::update_bills(const Storage<Bill>& bills, const char* ptr_file_name)
+{
+    rewrite_file(bills, ptr_file_name);
+}
+
+void FileHandler::update_doctors(const Storage<Doctor>& doctors, const char* ptr_file_name)
+{
+    rewrite_file(doctors, ptr_file_name);
+}
+
+void FileHandler::update_prescriptions(const Storage<Prescription>& prescriptions, const char* ptr_file_name)
+{
+    rewrite_file(prescriptions, ptr_file_name);
+}
+
+
+
+// Validator Functions need to be checked
+bool FileHandler::validate_patient(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    
+    if (!fin) 
+        throw FileNotFoundException();
+
+    while (true) 
+    {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; 
+        char ch;
+
+        while (fin.get(ch) && ch != '\n')
+         {
+            if (i >= size - 1) 
+            { 
+                resize_array(ptr_line, size, size * 2); size *= 2;
+            }
+            ptr_line[i++] = ch;
+        }
+
+        if (i == 0 && fin.eof())
+         { 
+            delete[] ptr_line;
+            ptr_line = nullptr; 
+            break; 
+        }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id, age; float balance;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_gender = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_contact = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_int(ptr_line, index, age); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_gender); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_contact); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password); Parser::skip_comma(ptr_line, index);
+        Parser::parse_float(ptr_line, index, balance);
+
+        // Convert file_id to char array manually
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else 
+        {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_gender; delete[] ptr_contact; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+bool FileHandler::validate_doctor(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    if (!fin) throw FileNotFoundException();
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) { resize_array(ptr_line, size, size * 2); size *= 2; }
+            ptr_line[i++] = ch;
+        }
+        if (i == 0 && fin.eof()) { delete[] ptr_line; break; }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id; double fee;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_specialization = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_contact = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_specialization); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_contact); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password); Parser::skip_comma(ptr_line, index);
+        Parser::parse_double(ptr_line, index, fee);
+
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_specialization; delete[] ptr_contact; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+bool FileHandler::validate_admin(const char* id, const char* password, const char* ptr_file_name) {
+    std::ifstream fin(ptr_file_name);
+    if (!fin) throw FileNotFoundException();
+
+    while (true) {
+        int size = DEFAULT_SIZE_CHAR_ARRAY;
+        char* ptr_line = new char[size];
+        int i = 0; char ch;
+
+        while (fin.get(ch) && ch != '\n') {
+            if (i >= size - 1) { resize_array(ptr_line, size, size * 2); size *= 2; }
+            ptr_line[i++] = ch;
+        }
+        if (i == 0 && fin.eof()) { delete[] ptr_line; break; }
+        ptr_line[i] = '\0';
+
+        int index = 0;
+        int file_id;
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];
+        char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
+
+        Parser::parse_int(ptr_line, index, file_id); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_name); Parser::skip_comma(ptr_line, index);
+        Parser::parse_string(ptr_line, index, ptr_password);
+
+        char id_buf[16]; int temp = file_id, pos = 0;
+        if (temp == 0) id_buf[pos++] = '0';
+        else {
+            char digits[16]; int d = 0;
+            while (temp > 0) { digits[d++] = '0' + (temp % 10); temp /= 10; }
+            while (d > 0) { id_buf[pos++] = digits[--d]; }
+        }
+        id_buf[pos] = '\0';
+
+        bool id_match = is_char_arrays_equal(id_buf, id);
+        bool pw_match = is_char_arrays_equal(ptr_password, password);
+
+        delete[] ptr_line; delete[] ptr_name; delete[] ptr_password;
+
+        if (id_match && pw_match) return true;
+    }
+    return false;
+}
+
+
+void FileHandler::log_security_attempt(const char* role, int entered_id, const char* result)
+{
+    std::ofstream fout("security_log.txt", std::ios::app);
+
+    if(!fout)
+    {
+        throw FileNotFoundException();
+    }
+
+    time_t now = time(0);
+    tm* current = localtime(&now);
+
+    fout << current->tm_mday << "-"
+         << current->tm_mon + 1 << "-"
+         << current->tm_year + 1900 << " "
+         << current->tm_hour << ":"
+         << current->tm_min << ":"
+         << current->tm_sec << ","
+         << role << ","
+         << entered_id << ","
+         << result << std::endl;
+
+    fout.close();
+}
+
+This is file_not_found_exception.hpp
+#include<iostream>
+
+#include"hospital_exception.hpp"
+
+#pragma once
+
+class FileNotFoundException : public HospitalException
+{
+    public:
+        FileNotFoundException();
+};
+
+This is for file_not_found_exception.cpp
+
+#include"hospital_exception.hpp"
+
+HospitalException::HospitalException(const char* ptr_message)
+{
+    // Used 200 because our project says we have to have a static character array to store 200 characters
+    for(int i = 0; *(ptr_message + i) != '\0' && i < 200; i++)
+    {
+        m_message[i] = *(ptr_message + i);
+        
+        if(*(ptr_message + i + 1) == '\0')
+        {
+            m_message[i + 1] = '\0';
+            break;
+        }
+    }
+}
+
+// what() is a special function to deal with exception handling that all the derived classes will use or override
+const char* HospitalException::what() const
+{
+    return m_message;
+}
+
+HospitalException::~HospitalException()
+{
+    // Literally empty cause we have nothing on the heap :/
+}
+
+This is in hospital_exception.hpp
+
+#include<iostream>
+#pragma once
+
+class HospitalException
+{
+    protected:
+        char m_message[200]; // It's only static because in the project it says for that
+    public:
+        HospitalException(const char* ptr_message);
+        virtual const char* what() const; 
+        virtual ~HospitalException();
+};
+
+This is in hospital_exception.cpp
+#include"hospital_exception.hpp"
+
+HospitalException::HospitalException(const char* ptr_message)
+{
+    // Used 200 because our project says we have to have a static character array to store 200 characters
+    for(int i = 0; *(ptr_message + i) != '\0' && i < 200; i++)
+    {
+        m_message[i] = *(ptr_message + i);
+        
+        if(*(ptr_message + i + 1) == '\0')
+        {
+            m_message[i + 1] = '\0';
+            break;
+        }
+    }
+}
+
+// what() is a special function to deal with exception handling that all the derived classes will use or override
+const char* HospitalException::what() const
+{
+    return m_message;
+}
+
+HospitalException::~HospitalException()
+{
+    // Literally empty cause we have nothing on the heap :/
+}
+
+
+This is in hospital_hours_violation_exception.hpp
+
+#include<iostream>
+
+#include"hospital_exception.hpp"
+
+class HospitalHoursViolationException : public HospitalException
+{
+    public:
+        HospitalHoursViolationException();
+};
+
+This is in hospital_hours_violation_exception.cpp
+#include"hospital_hours_violation_exception.hpp"
+
+HospitalHoursViolationException::HospitalHoursViolationException() : HospitalException(" Unfortunately the time slot that you chose is outside hospital operating hours :( ")
+{
+    
+}
+
+This is in invalid_input_exception.hpp
+#include"hospital_exception.hpp"
+
+#pragma once
+
+class InvalidInputException : public HospitalException
+{
+    public:
+        InvalidInputException();
+};
+
+
+This is in invalid_input_exception.cpp
+
+#include"invalid_input_exception.hpp"
+
+InvalidInputException::InvalidInputException() : HospitalException(" Sorry you entered invalid input ")
+{
+    
+}
+
+This is in parser.hpp
+#pragma once
+
+// Static utility class
+class Parser
+{
+public:
+    static void parse_int(const char* line, int& i, int& value);
+    static void parse_float(const char* line, int& i, float& value);
+    static void parse_double(const char* line, int& i, double& value);
+    static void parse_char(const char* line, int& i, char& character);
+    static void parse_string(const char* line, int& i, char* &output);
+    static void skip_comma(const char* line, int& i);
+};
+
+
+This is in parser.cpp
+#include"parser.hpp"
+#include"char_array_functions.hpp"
+
+void Parser::parse_int(const char* line, int& i, int& value)
+{
+    value = 0;
+
+    while (line[i] != ',' && line[i] != '\0')
+    {
+        value = value * 10 + (line[i] - '0');
+        i++;
+    }
+}
+
+void Parser::skip_comma(const char* line, int& i)
+{
+    if (line[i] == ',')
+        i++;
+}
+
+void Parser::parse_string(const char* line, int& i, char* &output)
+{
+    int size = DEFAULT_SIZE_CHAR_ARRAY;
+    output = new char[size];
+
+    int j = 0;
+
+    while (line[i] != ',' && line[i] != '\0')
+    {
+        if (j >= size - 1)
+        {
+            resize_array(output, size, size * 2);
+            size *= 2;
+        }
+
+        output[j++] = line[i++];
+    }
+
+    output[j] = '\0';
+}
+
+void Parser::parse_float(const char* line, int& i, float& value)
+{
+    value = 0;
+    float factor = 1.0f;
+
+    while (line[i] != ',' && line[i] != '\0')
+    {
+        if (line[i] == '.')
+        {
+            factor = 0.1f;
+            i++;
+            continue;
+        }
+
+        if (factor == 1.0f)
+        {
+            value = value * 10 + (line[i] - '0');
+        }
+        else
+        {
+            value += (line[i] - '0') * factor;
+            factor *= 0.1f;
+        }
+
+        i++;
+    }
+}
+
+void Parser::parse_char(const char* line, int& i, char& character)
+{
+    if (line[i] != '\0')
+    {
+        character = line[i];
+    }
+    else
+    {
+        character = '\0'; // fallback safety
+    }
+    i++;
+}
+
+void Parser::parse_double(const char* line, int& i, double& value)
+{
+    value = 0.0;
+    double factor = 1.00;
+
+    while (line[i] != ',' && line[i] != '\0')
+    {
+        if (line[i] == '.')
+        {
+            factor = 0.1;
+            i++;
+            continue;
+        }
+
+        if (factor == 1.0)
+        {
+            value = value * 10 + (line[i] - '0');
+        }
+        else
+        {
+            value += (line[i] - '0') * factor;
+            factor *= 0.1;
+        }
+
+        i++;
+    }
+}
+
+This is in patient.hpp
+#include<iostream>
+#include"person.hpp"
+#pragma once
+
+class Patient : public Person
+{
+    private:
+        double m_balance;   
+         
+        char* m_ptr_contact;
+
+    public:
+        Patient();
+        Patient(int id, char* ptr_password, char* ptr_name, const char* gender, int m_age, char* ptr_contact, double balance);
+        Patient(const Patient& obj);
+        Patient& operator=(const Patient& obj);
+
+        Patient& operator+=(double balance);
+        Patient& operator-= (double balance);
+        bool operator==(const Patient& obj) const;
+        friend std::ostream& operator<<(std::ostream& output, const Patient& obj);
+        friend std::istream& operator>>(std::istream& input, Patient& obj);
+
+        void display() override;
+        void menu() override;
+
+        char* get_contact() const;
+        double get_balance() const;
+
+        ~Patient();
+};
+
+
+
+This is in patient.cpp
+#include "patient.hpp"
+#include "char_array_functions.hpp"
+
+Patient::Patient() : Person()
+{
+    m_ptr_contact = nullptr;
+    m_balance = 0.0;
+}
+
+Patient::Patient(int id, char* ptr_password, char* ptr_name, const char* gender, int age, char* ptr_contact, double balance) : Person(id, ptr_password, ptr_name, gender, age)
+{
+    m_ptr_contact = nullptr;
+
+    int contact_size = get_char_arr_size(ptr_contact);
+    copy_array(m_ptr_contact, ptr_contact, contact_size + 1);
+
+    m_balance = balance;
+}
+
+Patient::Patient(const Patient& obj) : Person(obj)
+{
+    m_ptr_contact = nullptr;
+
+    int contact_size = get_char_arr_size(obj.m_ptr_contact);
+    copy_array(m_ptr_contact, obj.m_ptr_contact, contact_size + 1);
+
+    m_balance = obj.m_balance;
+}
+
+Patient& Patient::operator=(const Patient& obj)
+{
+    if (this != &obj)
+    {
+        // Call base class assignment
+        Person::operator=(obj);
+
+        if(m_ptr_contact != nullptr)
+        delete[] m_ptr_contact;
+        m_ptr_contact = nullptr;
+
+        int contact_size = get_char_arr_size(obj.m_ptr_contact);
+        copy_array(m_ptr_contact, obj.m_ptr_contact, contact_size + 1);
+
+        m_balance = obj.m_balance;
+    }
+    return *this;
+}
+
+Patient::~Patient()
+{
+    delete[] m_ptr_contact;
+    m_ptr_contact = nullptr;
+}
+
+Patient& Patient::operator+=(double amount)
+{
+    m_balance += amount;
+    return *this;
+}
+// -------------------------
+Patient& Patient::operator-=(double amount)
+{
+    m_balance -= amount;
+    return *this;
+}
+
+bool Patient::operator==(const Patient& obj) const
+{
+    if(m_id == obj.m_id)
+    {
+        return true;
+    }
+
+    else
+    {
+        return false;
+    }
+}
+
+std::ostream& operator<<(std::ostream& output, const Patient& obj)
+{
+    output << obj.m_id << ",";
+    output << obj.m_ptr_name << ",";
+    output << obj.m_age << ",";
+    output << obj.m_gender << ",";
+    output << obj.m_ptr_contact << ",";
+    output << obj.m_ptr_password << ",";
+    output << obj.m_balance;
+
+    return output;
+}
+
+std::istream& operator>>(std::istream& input, Patient& obj)
+{
+    std::cout << "Enter Name:\n";
+    safe_get_line(obj.m_ptr_name);
+
+    std::cout << "Enter Password:\n";
+    safe_get_line(obj.m_ptr_password);
+
+    std::cout << "Enter Contact:\n";
+    safe_get_line(obj.m_ptr_contact);
+
+    std::cout << "Enter Age:\n";
+    input >> obj.m_age;
+
+    std::cout << "Enter Gender (M/F) either M or F:\n";
+    char temp;
+    input >> temp;
+
+    if(temp == 'M' || temp == 'm')
+    {
+        obj.m_gender = male;
+    }
+
+    if(temp == 'F' || temp == 'f')
+    {
+        obj.m_gender = female;
+    }
+
+    std::cout << "Enter Balance:\n";
+    input >> obj.m_balance;
+
+    return input;
+}
+
+void Patient::display()
+{
+    std::cout << *this; // It will call << overload  I know very weird to have 2 ways to display it right
+}
+
+void Patient::menu()
+{
+    std::cout << "\nPatient Menu\n";
+    std::cout << "1. Book Appointment\n";
+    std::cout << "2. Cancel Appointment\n";
+    std::cout << "3. View Appointments\n";
+    std::cout << "4. View Medical Records\n";
+    std::cout << "5. View Bills\n";
+    std::cout << "6. Pay Bill\n";
+    std::cout << "7. Top Up Balance\n";
+    std::cout << "8. Logout\n";
+}
+
+
+char* Patient::get_contact() const
+{
+    return m_ptr_contact;
+}
+
+double Patient::get_balance() const
+{
+    return m_balance;
+}
+
+This is in person.hpp
+#pragma once
+// Abstract Base Class to avoid repetition
+
+static const char* male = "Male";
+static const char* female = "Female";
+
+class Person
+{
+    protected:
+        int m_age;    
+        const char* m_gender;
+        
+        char* m_ptr_name;
+        
+        // Credientials
+        int m_id;
+        char* m_ptr_password;
+    public:
+        Person();
+        Person(int id, char* ptr_password, char* ptr_name, const char* gender, int m_age);
+        Person(const Person& obj);
+        Person& operator=(const Person& obj);
+
+        virtual void display() = 0; // So child classes override it
+        virtual void menu() = 0;    // So child classes override it
+        
+        int get_id() const;
+        char* get_name() const;
+        char* get_password() const;
+        int get_age() const;
+        const char* get_gender() const;
+        
+        bool login(int id, char* ptr_password) const;
+
+        virtual ~Person();
+};
+
+This is in person.cpp
+
+#include "person.hpp"
+#include "char_array_functions.hpp"
+#include "invalid_input_exception.hpp"
+
+Person::Person()
+{
+    m_id = 0;
+    m_age = 0;
+    m_gender = nullptr; // Imagine having nullptr as gender. Crazy right
+    m_ptr_name = nullptr; 
+    m_ptr_password = nullptr;
+}
+
+
+Person::Person(int id, char* ptr_password, char* ptr_name, const char* gender, int age)
+{
+    m_id = id;
+    m_age = age;
+    m_gender = gender;
+
+    int name_size = get_char_arr_size(ptr_name);
+    m_ptr_name = nullptr;
+    copy_array(m_ptr_name, ptr_name, name_size + 1);
+
+    int password_size = get_char_arr_size(ptr_password);
+    m_ptr_password = nullptr;
+    copy_array(m_ptr_password, ptr_password, password_size + 1);
+
+}
+
+Person::Person(const Person& obj)
+{
+    m_id = obj.m_id;
+    m_age = obj.m_age;
+    m_gender = obj.m_gender;
+
+    int name_size = get_char_arr_size(obj.m_ptr_name);
+    m_ptr_name = nullptr;
+    copy_array(m_ptr_name, obj.m_ptr_name, name_size + 1);
+
+    int password_size = get_char_arr_size(obj.m_ptr_password);
+    m_ptr_password = nullptr;
+    copy_array(m_ptr_password, obj.m_ptr_password, password_size + 1);
+}
+
+Person& Person::operator=(const Person& obj)
+{
+    if(this != &obj)
+    {
+        m_id = obj.m_id;
+        m_age = obj.m_age;
+        m_gender = obj.m_gender;
+
+        int name_size = get_char_arr_size(obj.m_ptr_name);
+        if(m_ptr_name != nullptr)
+            delete[] m_ptr_name;
+        m_ptr_name = nullptr;
+        copy_array(m_ptr_name, obj.m_ptr_name, name_size + 1);
+
+        int password_size = get_char_arr_size(obj.m_ptr_password);
+        if(m_ptr_password != nullptr)
+            delete[] m_ptr_password;
+        m_ptr_password = nullptr;
+        copy_array(m_ptr_password, obj.m_ptr_password, password_size + 1);
+    }
+    return *this;
+}
+
+int Person::get_age() const
+{
+    return m_age;
+}
+
+int Person::get_id() const
+{
+    return m_id;
+}
+
+const char* Person::get_gender() const
+{
+    return m_gender;
+}
+
+char* Person::get_name() const
+{
+    return m_ptr_name;
+}
+
+char* Person::get_password() const
+{
+    return m_ptr_password;
+}
+
+bool Person::login(int id, char* ptr_password) const
+{
+    if(m_id != id)
+    {
+        return false;
+    }
+
+    if(ptr_password == nullptr)
+    {
+        throw InvalidInputException();
+    }
+
+    int size = get_char_arr_size(ptr_password);
+    int m_size = get_char_arr_size(m_ptr_password);
+    
+    if(size != m_size)
+    {
+        return false;
+    }
+
+    for(int i = 0; i < size; i++)
+    {
+        if(*(m_ptr_password + i) != *(ptr_password + i))
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+Person::~Person()
+{
+    delete[] m_ptr_name;
+    delete[] m_ptr_password;
+
+    m_ptr_name = nullptr;
+    m_ptr_password = nullptr;
+}
+
+This is in prescription.hpp
+#include<iostream>
+#pragma once
+
+class Prescription
+{
+    private:
+        int m_prescription_id;
+        int m_appointment_id;
+        int m_patient_id;
+        int m_doctor_id;
+
+        char* m_ptr_date; 
+        char* m_ptr_medicine;
+        char* m_ptr_doc_note; //  Doc note is a crazy name 
+
+        void set_date(char* ptr_date);
+        void set_medicine(char* ptr_medicine);
+        void set_doctor_note(char* ptr_doc_note);
+
+    public:
+        Prescription();
+        Prescription(int prescription_id, int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_medicine, char* ptr_doc_note);
+        Prescription(const Prescription& obj);
+
+        Prescription& operator=(const Prescription& obj);
+
+        bool operator==(const Prescription& obj) const;
+        friend std::ostream& operator<<(std::ostream& output, const Prescription& obj);
+
+        int get_prescription_id() const;
+        int get_appointment_id() const;
+        int get_doctor_id() const;
+
+        char* get_date() const;
+        char* get_medicine() const;
+        char* get_doctor_note() const;
+
+        void set_prescription(int prescription_id, int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_medicine, char* ptr_doc_note);
+
+        ~Prescription();
+};
+
+This is in prescription.cpp
+
+#include"prescription.hpp"
+#include"char_array_functions.hpp"
+
+Prescription::Prescription()
+{
+    m_prescription_id = 0;
+    m_appointment_id = 0;
+    m_patient_id = 0;
+    m_doctor_id = 0;
+
+    m_ptr_date = nullptr;
+    m_ptr_medicine = nullptr;
+    m_ptr_doc_note = nullptr;
+}
+
+Prescription::Prescription(int prescription_id, int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_medicine, char* ptr_doc_note)
+{
+    m_prescription_id = prescription_id;
+    m_appointment_id = appointment_id;
+    m_patient_id = patient_id;
+    m_doctor_id = doctor_id;
+
+    m_ptr_date = nullptr;
+    m_ptr_medicine = nullptr;
+    m_ptr_doc_note = nullptr;
+
+    set_date(ptr_date);
+    set_medicine(ptr_medicine);
+    set_doctor_note(ptr_doc_note);
+}
+
+Prescription::Prescription(const Prescription& obj)
+{
+    m_prescription_id = obj.m_prescription_id;
+    m_appointment_id = obj.m_appointment_id;
+    m_patient_id = obj.m_patient_id;
+    m_doctor_id = obj.m_doctor_id;
+
+    m_ptr_date = nullptr;
+    m_ptr_medicine = nullptr;
+    m_ptr_doc_note = nullptr;
+
+    set_date(obj.m_ptr_date);
+    set_medicine(obj.m_ptr_medicine);
+    set_doctor_note(obj.m_ptr_doc_note);
+}
+
+Prescription& Prescription::operator=(const Prescription& obj)
+{
+    if (this != &obj)
+    {
+        m_prescription_id = obj.m_prescription_id;
+        m_appointment_id = obj.m_appointment_id;
+        m_patient_id = obj.m_patient_id;
+        m_doctor_id = obj.m_doctor_id;
+
+        if(m_ptr_date != nullptr)
+            delete[] m_ptr_date;
+        
+        if(m_ptr_medicine != nullptr)
+            delete[] m_ptr_medicine;
+        
+        if(m_ptr_doc_note != nullptr)
+            delete[] m_ptr_doc_note;
+
+        m_ptr_date = nullptr;
+        m_ptr_medicine = nullptr;
+        m_ptr_doc_note = nullptr;
+
+        set_date(obj.m_ptr_date);
+        set_medicine(obj.m_ptr_medicine);
+        set_doctor_note(obj.m_ptr_doc_note);
+    }
+    return *this;
+}
+
+bool Prescription::operator==(const Prescription& obj) const
+{
+    if(m_prescription_id != obj.m_prescription_id)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+std::ostream& operator<<(std::ostream& output, const Prescription& obj)
+{
+    output << obj.m_prescription_id << ",";
+    output << obj.m_appointment_id << ",";
+    output << obj.m_patient_id << ",";
+    output << obj.m_doctor_id << ",";
+    output << obj.m_ptr_date << ",";
+    output << obj.m_ptr_medicine << ",";
+    output << obj.m_ptr_doc_note;
+
+    return output;
+}
+
+int Prescription::get_prescription_id() const
+{
+    return m_prescription_id;
+}
+
+int Prescription::get_appointment_id() const
+{
+    return m_appointment_id;
+}
+
+int Prescription::get_doctor_id() const
+{
+    return m_doctor_id;
+}
+
+char* Prescription::get_date() const
+{
+    return m_ptr_date;
+}
+
+char* Prescription::get_medicine() const
+{
+    return m_ptr_medicine;
+}
+
+char* Prescription::get_doctor_note() const
+{
+    return m_ptr_doc_note;
+}
+
+void Prescription::set_date(char* ptr_date)
+{
+    if (m_ptr_date != nullptr)
+        delete[] m_ptr_date;
+
+    m_ptr_date = nullptr;
+
+    copy_array(m_ptr_date, ptr_date, get_char_arr_size(ptr_date) + 1);
+}
+
+void Prescription::set_medicine(char* ptr_medicine)
+{
+    if (m_ptr_medicine != nullptr)
+        delete[] m_ptr_medicine;
+
+    m_ptr_medicine = nullptr;
+
+    copy_array(m_ptr_medicine, ptr_medicine, get_char_arr_size(ptr_medicine) + 1);
+}
+
+void Prescription::set_doctor_note(char* ptr_doc_note)
+{
+    if (m_ptr_doc_note != nullptr)
+        delete[] m_ptr_doc_note;
+
+    m_ptr_doc_note = nullptr;
+
+    copy_array(m_ptr_doc_note, ptr_doc_note, get_char_arr_size(ptr_doc_note) + 1);
+}
+
+void Prescription::set_prescription(int prescription_id, int appointment_id, int patient_id, int doctor_id, char* ptr_date, char* ptr_medicine, char* ptr_doc_note)
+{
+    m_prescription_id = prescription_id;
+    m_appointment_id = appointment_id;
+    m_patient_id = patient_id;
+    m_doctor_id = doctor_id;
+
+    set_date(ptr_date);
+    set_medicine(ptr_medicine);
+    set_doctor_note(ptr_doc_note);
+}
+
+Prescription::~Prescription()
+{
+    delete[] m_ptr_date;
+    delete[] m_ptr_medicine;
+    delete[] m_ptr_doc_note;
+
+    m_ptr_date = nullptr;
+    m_ptr_medicine = nullptr;
+    m_ptr_doc_note = nullptr;
+}
+
+This is in slot_unavailable_exception.hpp
+#include<iostream>
+
+#include"hospital_exception.hpp"
+
+#pragma once
+
+class SlotUnavailableException : public HospitalException
+{
+    public:
+        SlotUnavailableException();
+};
+
+This is in slot_unavailable_exception.cpp
+
+#include"slot_unavailable_exception.hpp"
+
+SlotUnavailableException::SlotUnavailableException() : HospitalException(" Sorry the slot right now is unavaiable")
+{
+    
+}
+
+This is in storage.hpp
+#include<iostream>
+#pragma once
+
+template <typename Entity>
+class Storage
+{
+private:
+    Entity data[100];
+    int count;
+    
+public:
+    Storage();
+
+    void add(const Entity& obj);
+    Entity* find(int id);
+    bool remove(int id);
+    int size() const;
+    Entity* get_data(); // To send a modifyable pointer
+    const Entity* get_data() const; // To send a non modifyable pointer
+};
+
+This is in storage.tpp
+
+#include"storage.hpp"
+#include"appointment.hpp"
+#include"char_array_functions.hpp"
+
+template <typename Entity>
+Storage<Entity>::Storage()
+{
+    count = 0;
+}
+
+template <typename Entity>
+void Storage<Entity>::add(const Entity& obj)
+{
+    if (count < 100)
+    {
+        data[count] = obj;
+        count++;
+    }
+    else
+    {
+        std::cout << "\n Storage full";
+    }
+}
+
+template <typename Entity>
+Entity* Storage<Entity>::find(int id)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (data[i].get_id() == id)
+        {
+            return &data[i];
+        }
+    }
+    return nullptr;
+}
+
+template <typename Entity>
+bool Storage<Entity>::remove(int id)
+{
+    for (int i = 0; i < count; i++)
+    {
+        if (data[i].get_id() == id)
+        {
+            for (int j = i; j < count - 1; j++)
+            {
+                data[j] = data[j + 1];
+            }
+            count--;
+            return true;
+        }
+    }
+    return false;
+}
+
+template <typename Entity>
+int Storage<Entity>::size() const
+{
+    return count;
+}
+
+template<typename Entity>
+Entity* Storage<Entity>::get_data()
+{
+    return data; // Returns the pointer for the first member of the static array which we can use to traverse the whole array
+}
+
+template<typename Entity>
+const Entity* Storage<Entity>::get_data() const
+{
+    return data; // Returns the pointer for the first member of the static array which we can use to traverse the whole array but the const one which helps us to use it in our static utility filehandler class
+}
+
+
+
+This is in validator.hpp
+#include<iostream>
+#pragma once
+// It is also a static utility class
+class Validator
+{
+    private:
+        static int current_year;
+        static bool is_leap_year(int year);
+    public:
+        static bool validate_id(int id);
+        static bool validate_menu_choice(int choice, int min, int max);
+        static bool validate_contact(const char* ptr_contact);
+        static bool validate_positive_float(float value);
+        static bool validate_positive_double(double value);
+        static bool validate_time_slot(const char* ptr_time_slot); // IDK how to know at what time slots the doctor is free at
+        static bool is_within_operating_hours(const char* ptr_time_slot);
+        static bool validate_time_format(const char* ptr_time_slot);
+        static bool validate_date(const char* ptr_date);
+};
+
+
+This is in validator.cpp
+
+#include"validator.hpp"
+#include"invalid_input_exception.hpp"
+
+// I could have used an online clock
+// But probably that would make our application entirely dependent online 
+int Validator::current_year = 2026;
+// None of these will return false
+// Either they will return true or error exceptions :/
+bool Validator::validate_id(int id)
+{
+    if(id <= 0)
+    {
+
+        throw InvalidInputException();
+    }
+    return true;
+}
+
+bool Validator::validate_menu_choice(int choice, int min, int max)
+{
+    if(choice > max || choice < min)
+    {
+        throw InvalidInputException();
+    }
+    return true;
+}
+
+bool Validator::validate_positive_float(float value)
+{
+    if(value < 0)
+    {
+        throw InvalidInputException();
+    }
+    return true;
+}
+
+bool Validator::validate_positive_double(double value)
+{
+    if(value < 0)
+    {
+        throw InvalidInputException();
+    }
+    return true;
+}
+
+bool Validator::validate_contact(const char* ptr_contact)
+{
+    // FIst 2 digits for a PK number start from 03XX-XXXXXXX
+    if(*(ptr_contact + 0) != '0' || *(ptr_contact + 1) != '3')
+    {
+        throw InvalidInputException();
+    }
+
+    int length = 0;
+    for(int i = 0; *(ptr_contact + i) != '\0'; i++)
+    {
+        if(*(ptr_contact + i) >= '0' && *(ptr_contact + i) <= '9')
+        {
+            length++;
+        }
+        else
+        {
+            throw InvalidInputException();
+        }
+    }
+    if(length == 11)
+    {
+        return true;
+    }
+
+    throw InvalidInputException();
+}
+
+bool Validator::validate_date(const char* ptr_date)
+{
+    if (ptr_date == nullptr)
+        throw InvalidInputException();
+
+    if (*(ptr_date + 2) != '-' || *(ptr_date + 5) != '-')
+        throw InvalidInputException();
+
+    for (int i = 0; i < 10; i++)
+    {
+        if (i == 2 || i == 5)
+            continue;
+
+        if (*(ptr_date + i) < '0' || *(ptr_date + i) > '9')
+            throw InvalidInputException();
+    }
+
+    if (*(ptr_date + 10) != '\0')
+        throw InvalidInputException();
+
+    // Extracting digits
+    int day =
+        (*(ptr_date + 0) - '0') * 10 +
+        (*(ptr_date + 1) - '0');
+
+    int month =
+        (*(ptr_date + 3) - '0') * 10 +
+        (*(ptr_date + 4) - '0');
+
+    int year =
+        (*(ptr_date + 6) - '0') * 1000 +
+        (*(ptr_date + 7) - '0') * 100 +
+        (*(ptr_date + 8) - '0') * 10 +
+        (*(ptr_date + 9) - '0');
+
+    if (month < 1 || month > 12)
+        throw InvalidInputException();
+
+    if (year < current_year)
+        throw InvalidInputException();
+
+   
+    int max_days;
+
+    if (month == 4 || month == 6 || month == 9 || month == 11)
+        max_days = 30;
+    else if (month == 2)
+        max_days = is_leap_year(year) ? 29 : 28;
+    else
+        max_days = 31;
+
+    if (day < 1 || day > max_days)
+        throw InvalidInputException();
+
+    return true;
+}
+
+bool Validator::is_leap_year(int year)
+{
+    if(year % 400 == 0)
+    {
+        return true;
+    }
+
+    if(year % 100 == 0)
+    {
+        return false;
+    }
+    if(year % 4 == 0)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool Validator::validate_time_slot(const char* ptr_time)
+{
+    if (!validate_time_format(ptr_time))
+        return false;
+
+    if(!is_within_operating_hours(ptr_time))
+        return false;
+
+    return true;
+}
+
+bool Validator::validate_time_format(const char* ptr_time)
+{
+    if (ptr_time == nullptr)
+        return false;
+
+    // Checking for HH:MM format
+    if (*(ptr_time + 2) != ':')
+        return false;
+
+    // Check digits only
+    for (int i = 0; i < 5; i++)
+    {
+        if (i == 2) 
+            continue;
+
+        if (*(ptr_time + i) < '0' || *(ptr_time + i) > '9')
+            return false;
+    }
+
+    // Must end exactly here
+    if (*(ptr_time + 5) != '\0')
+        return false;
+
+    return true;
+}
+
+bool Validator::is_within_operating_hours(const char* ptr_time)
+{
+    if (ptr_time == nullptr)
+        return false;
+
+    // I never knew we could have done that :(
+    const char* valid_slots[] =
+    {
+        "09:00", "10:00", "11:00", "12:00",
+        "13:00", "14:00", "15:00", "16:00"
+    };
+
+    for (int i = 0; i < 8; i++)
+    {
+        bool match = true;
+
+        for (int j = 0; valid_slots[i][j] != '\0'; j++)
+        {
+            if (ptr_time[j] != valid_slots[i][j])
+            {
+                match = false;
+                break;
+            }
+        }
+
+        if (match && ptr_time[5] == '\0')
+            return true;
+    }
+
+    return false;
+}
+
+

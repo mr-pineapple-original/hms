@@ -51,7 +51,24 @@ class FileHandler
         static bool validate_patient(const char* id, const char* password, const char* ptr_file_name);
         static bool validate_doctor(const char* id, const char* password, const char* ptr_file_name);
         static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
-        static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
 
         static void log_security_attempt(const char* role, int entered_id, const char* result);
 };  
+
+
+template<typename Entity>
+int FileHandler::generate_new_id(const Storage<Entity>& entity)
+{
+    int max_id = 0;
+    const Entity* ptr_entity = entity.get_data();
+
+    for(int i = 0; i < entity.size(); i++)
+    {
+        if(max_id < (*(ptr_entity + i)).get_id())
+        {
+            max_id = (*(ptr_entity + i)).get_id();
+        }
+    }
+    max_id = max_id + 1;
+    return max_id;
+}
