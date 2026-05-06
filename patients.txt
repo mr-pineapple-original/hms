@@ -1,4 +1,4 @@
-1,Ahmed Ali,28,M,03001234567,pass123,97000.6
+1,Ahmed Ali,28,M,03001234567,pass123,94000.6
 3,Abdur Rafay,17,Male,03034347524,987,3000
 4,Zara Hussain,25,Female,03331234567,mypass1,0
 5,Zara Hussain,25,Female,03331234567,mypass1,0
