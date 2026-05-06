@@ -85,6 +85,11 @@ std::ostream& operator<<(std::ostream& output, const Bill& obj)
 
 void Bill::set_status(char* ptr_status)
 {
+    // This should not happen
+    // But we have to try to see if it debugs
+    if (ptr_status == m_ptr_status)
+        return;
+
     if (m_ptr_status != nullptr) 
         delete[] m_ptr_status;
     
@@ -94,6 +99,11 @@ void Bill::set_status(char* ptr_status)
 
 void Bill::set_date(char* ptr_date)
 {
+    // This should not happen
+    // But we have to try to see if it debugs
+    if (ptr_date == m_ptr_date)
+        return;
+
     if (m_ptr_date != nullptr) 
         delete[] m_ptr_date;
 

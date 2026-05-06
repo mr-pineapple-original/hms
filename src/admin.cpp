@@ -8,7 +8,7 @@ Admin::Admin() : Person()
     
 }
 
-Admin::Admin(int id, char* ptr_password)  : Person(id, ptr_password, "Unknown", male, 18)
+Admin::Admin(int id, char* ptr_password, char* ptr_name)  : Person(id, ptr_password, ptr_name, male, 18)
 {
     if(ptr_password == nullptr)
         throw InvalidInputException();
@@ -38,27 +38,18 @@ void Admin::display()
 void Admin::menu() 
 {
 
-    int choice;
+    std::cout << "\n Admin Panel — MediCore \n";
+    std::cout << "1. Add Doctor \n";
+    std::cout << "2. Remove Doctor \n";
+    std::cout << "3. View All Patients \n";
+    std::cout << "4. View All Doctors \n";
+    std::cout << "5. View All Appointments \n";
+    std::cout << "6. View Unpaid Bills \n";
+    std::cout << "7. Discharge Patient \n";
+    std::cout << "8. View Security Log \n";
+    std::cout << "9. Generate Daily Report \n";
+    std::cout << "10. Logout \n";
 
-    do
-    {
-        std::cout << "\n Admin Panel — MediCore \n";
-        std::cout << "1. Add Doctor \n";
-        std::cout << "2. Remove Doctor \n";
-        std::cout << "3. View All Patients \n";
-        std::cout << "4. View All Doctors \n";
-        std::cout << "5. View All Appointments \n";
-        std::cout << "6. View Unpaid Bills \n";
-        std::cout << "7. Discharge Patient \n";
-        std::cout << "8. View Security Log \n";
-        std::cout << "9. Generate Daily Report \n";
-        std::cout << "10. Logout \n";
-
-        std::cin >> choice;
-
-        // Still needs more work mate
-
-    } while (choice != 10);
 }
 
 bool Admin::authenticate(int id, char* ptr_password) const

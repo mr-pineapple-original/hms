@@ -112,6 +112,11 @@ int Prescription::get_doctor_id() const
     return m_doctor_id;
 }
 
+int Prescription::get_patient_id() const
+{
+    return m_patient_id;
+}
+
 char* Prescription::get_date() const
 {
     return m_ptr_date;

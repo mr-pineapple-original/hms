@@ -48,14 +48,16 @@ class FileHandler
         template<typename Entity>
         static int generate_new_id(const Storage<Entity>& entity);
 
+        // I don't even know if they work or not mate
         static bool validate_patient(const char* id, const char* password, const char* ptr_file_name);
         static bool validate_doctor(const char* id, const char* password, const char* ptr_file_name);
         static bool validate_admin(const char* id, const char* password, const char* ptr_file_name);
 
         static void log_security_attempt(const char* role, int entered_id, const char* result);
+        static void read_security_log(std::ifstream &fin);
 };  
 
-
+// Template thingies were doing trouble in cpp files
 template<typename Entity>
 int FileHandler::generate_new_id(const Storage<Entity>& entity)
 {

@@ -6,7 +6,7 @@ class Admin : public Person
 {
     public:
         Admin();
-        Admin(int id, char* ptr_password);
+        Admin(int id, char* ptr_password, char* ptr_name);
         Admin(const Admin& obj);
 
         Admin& operator=(const Admin& obj);

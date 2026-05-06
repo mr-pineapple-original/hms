@@ -232,5 +232,6 @@ bool Validator::validate_age(int age)
     {
         throw InvalidInputException();
     }
-
+    
+    return true;
 }

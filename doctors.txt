@@ -1,0 +1,4 @@
+1,Dr. Sara Khan,Cardiology,03111234567,doc456,1500
+2,Dr. Ali Raza,Neurology,03211234567,doc789,2000
+3,cadmin,Heart Specialist,03235511211,900,90000
+4,Dr. Kamran,Dermatology,03451234567,drpass1,1200

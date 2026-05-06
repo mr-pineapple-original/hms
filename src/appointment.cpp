@@ -147,6 +147,11 @@ char* Appointment::get_status() const
 
 void Appointment::set_date(char* ptr_date)
 {
+    // This should not happen
+    // But we have to try to see if it debugs
+    if (ptr_date == m_ptr_date)
+        return;
+
     if(m_ptr_date != nullptr)
         delete[] m_ptr_date;
 
@@ -157,6 +162,11 @@ void Appointment::set_date(char* ptr_date)
 
 void Appointment::set_time_slot(char* ptr_time_slot)
 {
+    // This should not happen
+    // But we have to try to see if it debugs
+    if (ptr_time_slot == m_ptr_time_slot)
+        return;
+
     if(ptr_time_slot == nullptr)
         throw InvalidInputException();
 
@@ -179,6 +189,11 @@ void Appointment::set_time_slot(char* ptr_time_slot)
 
 void Appointment::set_status(char* ptr_status)
 {
+    // This should not happen
+    // But we have to try to see if it debugs
+    if (ptr_status == m_ptr_date)
+        return;
+
     if(m_ptr_status != nullptr)
         delete[] m_ptr_status;
 

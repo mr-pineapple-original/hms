@@ -30,6 +30,7 @@ class Prescription
         int get_id() const;
         int get_appointment_id() const;
         int get_doctor_id() const;
+        int get_patient_id() const;
 
         char* get_date() const;
         char* get_medicine() const;

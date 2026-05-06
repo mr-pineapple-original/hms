@@ -51,7 +51,7 @@ login_btn.set_on_click([this]() {
     } else if (role == DOCTOR) {
         success = FileHandler::validate_doctor(id_buffer, pw_buffer, "doctors.txt");
     } else if (role == ADMIN) {
-        success = FileHandler::validate_admin(id_buffer, pw_buffer, "admins.txt");
+        success = FileHandler::validate_admin(id_buffer, pw_buffer, "admin.txt");
     }
 
     if (success) {

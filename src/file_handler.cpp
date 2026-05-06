@@ -252,7 +252,7 @@ void FileHandler::load_admins(Storage<Admin>& admins, const char* ptr_file_name)
         int index = 0;
 
         int id;
-        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];   // parsed but ignored cause the admin constructor does not require it
+        char* ptr_name = new char[DEFAULT_SIZE_CHAR_ARRAY];   
         char* ptr_password = new char[DEFAULT_SIZE_CHAR_ARRAY];
 
         Parser::parse_int(ptr_line, index, id);
@@ -263,7 +263,7 @@ void FileHandler::load_admins(Storage<Admin>& admins, const char* ptr_file_name)
 
         Parser::parse_string(ptr_line, index, ptr_password);
 
-        Admin obj(id, ptr_password);
+        Admin obj(id, ptr_password, ptr_name);
         admins.add(obj);
 
 
@@ -843,4 +843,41 @@ void FileHandler::log_security_attempt(const char* role, int entered_id, const c
          << result << std::endl;
 
     fout.close();
+}
+
+void FileHandler::read_security_log(std::ifstream &fin)
+{
+    int size = DEFAULT_SIZE_CHAR_ARRAY;
+    char* ptr_line = new char[size];
+    bool empty = true;
+
+    while (true)
+    {
+        int i = 0;
+        char ch;
+
+        while (fin.get(ch) && ch != '\n')
+        {
+            if (i >= size - 1)
+            {
+                resize_array(ptr_line, size, size * 2);
+                size *= 2;
+            }
+            *(ptr_line + i) = ch;
+            i++;
+        }
+
+        if (i == 0 && fin.eof())
+            break;
+
+        *(ptr_line + i) = '\0';
+        std::cout << ptr_line << "\n";
+        empty = false;
+    }
+
+    if (empty)
+        std::cout << "No security events logged.\n";
+
+    delete[] ptr_line;
+    ptr_line = nullptr;
 }
