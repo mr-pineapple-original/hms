@@ -660,6 +660,7 @@ void FileHandler::update_prescriptions(const Storage<Prescription>& prescription
 
 
 // Validator Functions need to be checked
+// IDK if they even work properly mate
 bool FileHandler::validate_patient(const char* id, const char* password, const char* ptr_file_name) {
     std::ifstream fin(ptr_file_name);
     
