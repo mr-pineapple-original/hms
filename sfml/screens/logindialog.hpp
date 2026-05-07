@@ -14,14 +14,20 @@ private:
     Label heading;
     Label id_label;
     Label password_label;
+    Label error_label;        // shows error / lock messages
+    Label attempts_label;     // shows "Attempt X/3"
     TextField id_field;
     TextField password_field;
     Button login_btn;
     Button back_btn;
+
+    int failed_attempts = 0;
+    bool locked = false;
+
 public:
-    int failed_attempts;
     LoginDialog(UserRole user_role);
     void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
     void update() override;
     void render(sf::RenderWindow& window) override;
+    void handle_event(sf::RenderWindow& window, const sf::Event& event);
 };

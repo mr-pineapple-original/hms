@@ -1,8 +1,8 @@
 #pragma once
 #include <SFML/Graphics.hpp>
-#include "../screens/screen.hpp"
+// #include "../screens/screen.hpp"
 #include <stdexcept>
-
+class Screen;
 class UIManager {
 private:
     static UIManager* s_instance;

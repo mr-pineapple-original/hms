@@ -10,7 +10,8 @@ find_package(SFML 3 REQUIRED COMPONENTS Graphics Window System)
 add_executable(apphms
 
     # BACKEND ! :D
-    src/main.cpp
+    # src/main.cpp
+    src/main_sfml.cpp
     src/admin.cpp
     src/doctor.cpp
     src/patient.cpp

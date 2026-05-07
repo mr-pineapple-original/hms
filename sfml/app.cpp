@@ -1,12 +1,16 @@
 #include "app.hpp"
 #include "screens/loginscreen.hpp"
 #include "screens/logindialog.hpp"
-#include <memory>
+#include "screens/patientmenuscreen.hpp"
+#include "screens/doctormenuscreen.hpp"
+#include "screens/adminmenuscreen.hpp"
+#include "components/ui_manager.hpp"
 
 void App::run()
 {
-    sf::RenderWindow window(sf::VideoMode({800, 600}), "HMS");
+    sf::RenderWindow window(sf::VideoMode({800, 600}), "MediCore HMS");
 
+    // Start at the role-selection login screen
     UIManager::instance().set_screen(new LoginScreen());
 
     while (window.isOpen())
@@ -19,12 +23,13 @@ void App::run()
             UIManager::instance().handle_event(window, *event);
         }
 
-        if (UIManager::instance().get_screen()->should_close)
+        // The LoginScreen sets should_close when Exit is chosen
+        Screen* current = UIManager::instance().get_screen();
+        if (current && current->should_close)
             window.close();
 
-        window.clear();
+        window.clear(sf::Color(30, 30, 30));  // dark background
         UIManager::instance().render(window);
         window.display();
     }
 }
-

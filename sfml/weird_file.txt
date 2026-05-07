@@ -1,0 +1,3659 @@
+This is in button.hpp
+
+#pragma once
+#include "element.hpp"
+#include "ui_manager.hpp"
+#include <SFML/Graphics.hpp>
+#include <functional>
+
+class Button : public Element {
+private:
+    sf::RectangleShape box;
+    sf::Text text;
+
+    std::function<void()> on_click;
+    bool is_hovered = false;
+
+public:
+    Button(const char* str, float width = 120.f, float height = 40.f)
+        : text(UIManager::instance().get_font(), str, 20)
+    {
+        box.setSize({width, height});
+        box.setFillColor(sf::Color(70, 70, 70));
+
+        text.setFillColor(sf::Color::White);
+
+        auto bounds = text.getLocalBounds();
+        text.setOrigin({bounds.size.x / 2.f, bounds.size.y / 2.f});
+    }
+
+    void set_position(float x, float y) {
+        position = {x, y};
+        box.setPosition(position);
+
+        auto size = box.getSize();
+        text.setPosition({
+            x + size.x / 2.f,
+            y + size.y / 2.f
+        });
+    }
+
+    void set_on_click(std::function<void()> fn) {
+        on_click = std::move(fn);
+    }
+
+    void handle_event(const sf::Event& event, const sf::RenderWindow& window) {
+        if (event.is<sf::Event::MouseButtonPressed>()) {
+            if (event.getIf<sf::Event::MouseButtonPressed>()->button == sf::Mouse::Button::Left) {
+                sf::Vector2i mouse = sf::Mouse::getPosition(window);
+                sf::Vector2f mpos = window.mapPixelToCoords(mouse);
+
+                if (box.getGlobalBounds().contains(mpos)) {
+                    if (on_click) on_click();
+                }
+            }
+        }
+    }
+
+    void render(sf::RenderWindow& window) override {
+        if (!visible) return;
+
+        window.draw(box);
+        window.draw(text);
+    }
+};
+
+This is in color_label.hpp
+#pragma once
+#include "label.hpp"
+#include <SFML/Graphics.hpp>
+
+// ── ColorLabel ────────────────────────────────────────────────────────────
+// A Label that exposes set_color() so you can show errors in red,
+// success messages in green, etc.
+//
+// Usage:
+//   ColorLabel err("", 18);
+//   err.set_color(sf::Color::Red);
+//   err.set_text("Invalid ID or password.");
+// ─────────────────────────────────────────────────────────────────────────
+
+class ColorLabel : public Element {
+private:
+    sf::Text text;
+
+public:
+    ColorLabel(const char* str = "", unsigned int size = 18)
+        : text(UIManager::instance().get_font(), str, size)
+    {
+        text.setFillColor(sf::Color::White);
+    }
+
+    void set_text(const std::string& str) {
+        text.setString(str);
+    }
+
+    void set_color(sf::Color color) {
+        text.setFillColor(color);
+    }
+
+    void set_position(float x, float y) {
+        position = {x, y};
+        text.setPosition(position);
+    }
+
+    void render(sf::RenderWindow& window) override {
+        if (!visible) return;
+        window.draw(text);
+    }
+};
+
+This is in element.hpp
+#pragma once
+#include <SFML/Graphics.hpp>
+
+class Element {
+public:
+    sf::Vector2f position;
+    bool visible = true;
+
+    virtual ~Element() = default;
+
+    virtual void update(float dt) {}
+    virtual void render(sf::RenderWindow& window) = 0;
+};
+
+This is in label.hpp
+#pragma once
+#include "element.hpp"
+#include "ui_manager.hpp"
+#include <SFML/Graphics.hpp>
+
+class Label : public Element {
+private:
+    sf::Text text;
+
+public:
+    Label(const char* str, unsigned int size = 20)
+        : text(UIManager::instance().get_font(), str, size)
+    {
+        text.setFillColor(sf::Color::White);
+    }
+
+    void set_text(const std::string& str) {
+        text.setString(str);
+    }
+
+    void set_position(float x, float y) {
+        position = {x, y};
+        text.setPosition(position);
+    }
+
+    void render(sf::RenderWindow& window) override {
+        if (!visible) return;
+        window.draw(text);
+    }
+};
+
+This is in textfield.hpp
+#pragma once
+#include "element.hpp"
+#include "ui_manager.hpp"
+#include <SFML/Graphics.hpp>
+
+class TextField : public Element
+{
+private:
+    sf::RectangleShape box;
+    sf::Text text;
+
+    sf::String input;
+    bool is_active = false;
+
+public:
+    TextField(float width = 250.f, float height = 40.f)
+        : text(UIManager::instance().get_font(), "", 20)
+    {
+        box.setSize({ width, height });
+        box.setFillColor(sf::Color(40, 40, 40));
+        box.setOutlineThickness(2.f);
+        box.setOutlineColor(sf::Color::White);
+
+        text.setFillColor(sf::Color::White);
+    }
+
+    void set_position(float x, float y)
+    {
+        position = { x, y };
+
+        box.setPosition(position);
+
+        text.setPosition({
+            x + 10.f,
+            y + 5.f
+        });
+    }
+
+    void handle_event(const sf::Event& event, const sf::RenderWindow& window)
+    {
+        // Mouse click → activate/deactivate field
+        if (event.is<sf::Event::MouseButtonPressed>())
+        {
+            if (event.getIf<sf::Event::MouseButtonPressed>()->button == sf::Mouse::Button::Left)
+            {
+                sf::Vector2i mouse = sf::Mouse::getPosition(window);
+                sf::Vector2f mpos = window.mapPixelToCoords(mouse);
+
+                is_active = box.getGlobalBounds().contains(mpos);
+            }
+        }
+
+        // Keyboard typing
+        if (is_active && event.is<sf::Event::TextEntered>())
+        {
+            auto unicode = event.getIf<sf::Event::TextEntered>()->unicode;
+
+            // Backspace
+            if (unicode == '\b')
+            {
+                if (!input.isEmpty())
+                {
+                    input.erase(input.getSize() - 1, 1);
+                }
+            }
+            // Printable characters only
+            else if (unicode >= 32 && unicode < 127)
+            {
+                input += unicode;
+            }
+
+            text.setString(input);
+        }
+    }
+
+    const sf::String& get_text() const
+    {
+        return input;
+    }
+
+    void clear()
+    {
+        input.clear();
+        text.setString(input);
+    }
+
+    void render(sf::RenderWindow& window) override
+    {
+        if (!visible)
+            return;
+
+        if (is_active)
+            box.setOutlineColor(sf::Color::Green);
+        else
+            box.setOutlineColor(sf::Color::White);
+
+        window.draw(box);
+        window.draw(text);
+    }
+};
+
+This is in ui_manager.cpp
+
+#include "ui_manager.hpp"
+
+UIManager* UIManager::s_instance = nullptr;
+
+UIManager::UIManager() {
+    m_ptr_current_screen = nullptr;
+    if (!font.openFromFile("assets/fonts/jetbrains.ttf")) {
+        throw std::runtime_error("Failed to load font");
+    }
+}
+
+UIManager& UIManager::instance() {
+    if (s_instance == nullptr) {
+        s_instance = new UIManager();
+    }
+    return *s_instance;
+}
+
+sf::Font& UIManager::get_font() {
+    return font;
+}
+
+void UIManager::set_screen(Screen* ptr_screen) {
+    if (m_ptr_current_screen != nullptr) {
+        delete m_ptr_current_screen;
+    }
+    m_ptr_current_screen = ptr_screen;
+}
+
+Screen* UIManager::get_screen() {
+    return m_ptr_current_screen;
+}
+
+void UIManager::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    if (m_ptr_current_screen != nullptr) {
+        m_ptr_current_screen->handle_event(window, event);
+    }
+}
+
+void UIManager::update() {
+    if (m_ptr_current_screen != nullptr) {
+        m_ptr_current_screen->update();
+    }
+}
+
+void UIManager::render(sf::RenderWindow& window) {
+    if (m_ptr_current_screen != nullptr) {
+        m_ptr_current_screen->render(window);
+    }
+}
+
+UIManager::~UIManager() {
+    delete m_ptr_current_screen;
+    m_ptr_current_screen = nullptr;
+}
+
+
+This is in ui_manager.hospital_exception
+#pragma once
+#include <SFML/Graphics.hpp>
+#include "../screens/screen.hpp"
+#include <stdexcept>
+
+class UIManager {
+private:
+    static UIManager* s_instance;
+    sf::Font font;
+    Screen* m_ptr_current_screen;
+
+    UIManager(); 
+
+public:
+    static UIManager& instance();
+
+    sf::Font& get_font();
+
+    void set_screen(Screen* ptr_screen);
+    Screen* get_screen();
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event);
+    void update();
+    void render(sf::RenderWindow& window);
+
+    ~UIManager();
+};
+
+#pragma once
+#include <SFML/Graphics.hpp>
+#include "../screens/screen.hpp"
+#include <stdexcept>
+
+class UIManager {
+private:
+    static UIManager* s_instance;
+    sf::Font font;
+    Screen* m_ptr_current_screen;
+
+    UIManager(); 
+
+public:
+    static UIManager& instance();
+
+    sf::Font& get_font();
+
+    void set_screen(Screen* ptr_screen);
+    Screen* get_screen();
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event);
+    void update();
+    void render(sf::RenderWindow& window);
+
+    ~UIManager();
+};
+
+This is in userrole.hpp
+#pragma once
+
+enum UserRole {
+    PATIENT,
+    DOCTOR,
+    ADMIN
+};
+
+This is in adminmenuscreen.cpp
+#include "adminmenuscreen.hpp"
+#include "loginscreen.hpp"
+
+// Sub-screens — uncomment as you build each one
+// #include "admin/adddoctorscreen.hpp"
+// #include "admin/removedoctorscreen.hpp"
+// #include "admin/viewpatientsscreen.hpp"
+// #include "admin/viewdoctorsscreen.hpp"
+// #include "admin/viewappointmentsscreen.hpp"
+// #include "admin/unpaidbillsscreen.hpp"
+// #include "admin/dischargepatientscreen.hpp"
+// #include "admin/securitylogscreen.hpp"
+// #include "admin/dailyreportscreen.hpp"
+
+AdminMenuScreen::AdminMenuScreen()
+    : heading_label("Admin Panel -- MediCore"),
+      divider_label("======================"),
+      add_doctor_btn    ("1. Add Doctor",          220, 40),
+      remove_doctor_btn ("2. Remove Doctor",        220, 40),
+      view_patients_btn ("3. View All Patients",    220, 40),
+      view_doctors_btn  ("4. View All Doctors",     220, 40),
+      view_appts_btn    ("5. View All Appointments",220, 40),
+      unpaid_bills_btn  ("6. View Unpaid Bills",    220, 40),
+      discharge_btn     ("7. Discharge Patient",    220, 40),
+      security_log_btn  ("8. Security Log",         220, 40),
+      daily_report_btn  ("9. Daily Report",         220, 40),
+      logout_btn        ("10. Logout",              220, 40),
+      status_label("")
+{
+    // ── Layout — two columns of 5 ─────────────────────────────────────────
+    // Left column: options 1-5   Right column: options 6-10
+    heading_label.set_position(50, 20);
+    divider_label.set_position(50, 50);
+
+    float left_x   = 80.f;
+    float right_x  = 450.f;
+    float start_y  = 100.f;
+    float btn_step = 80.f;
+
+    add_doctor_btn.set_position    (left_x,  start_y + btn_step * 0);
+    remove_doctor_btn.set_position (left_x,  start_y + btn_step * 1);
+    view_patients_btn.set_position (left_x,  start_y + btn_step * 2);
+    view_doctors_btn.set_position  (left_x,  start_y + btn_step * 3);
+    view_appts_btn.set_position    (left_x,  start_y + btn_step * 4);
+
+    unpaid_bills_btn.set_position  (right_x, start_y + btn_step * 0);
+    discharge_btn.set_position     (right_x, start_y + btn_step * 1);
+    security_log_btn.set_position  (right_x, start_y + btn_step * 2);
+    daily_report_btn.set_position  (right_x, start_y + btn_step * 3);
+    logout_btn.set_position        (right_x, start_y + btn_step * 4);
+
+    status_label.set_position(50, 570);
+
+    // ── Button handlers ───────────────────────────────────────────────────
+
+    add_doctor_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Add Doctor...");
+        // TODO: UIManager::instance().set_screen(new AddDoctorScreen());
+    });
+
+    remove_doctor_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Remove Doctor...");
+        // TODO: UIManager::instance().set_screen(new RemoveDoctorScreen());
+    });
+
+    view_patients_btn.set_on_click([this]() {
+        status_label.set_text("Opening: View All Patients...");
+        // TODO: UIManager::instance().set_screen(new ViewPatientsScreen());
+    });
+
+    view_doctors_btn.set_on_click([this]() {
+        status_label.set_text("Opening: View All Doctors...");
+        // TODO: UIManager::instance().set_screen(new ViewDoctorsScreen());
+    });
+
+    view_appts_btn.set_on_click([this]() {
+        status_label.set_text("Opening: View All Appointments...");
+        // TODO: UIManager::instance().set_screen(new ViewAppointmentsScreen());
+    });
+
+    unpaid_bills_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Unpaid Bills...");
+        // TODO: UIManager::instance().set_screen(new UnpaidBillsScreen());
+    });
+
+    discharge_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Discharge Patient...");
+        // TODO: UIManager::instance().set_screen(new DischargePatientScreen());
+    });
+
+    security_log_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Security Log...");
+        // TODO: UIManager::instance().set_screen(new SecurityLogScreen());
+    });
+
+    daily_report_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Daily Report...");
+        // TODO: UIManager::instance().set_screen(new DailyReportScreen());
+    });
+
+    logout_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new LoginScreen());
+    });
+}
+
+void AdminMenuScreen::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    add_doctor_btn.handle_event    (event, window);
+    remove_doctor_btn.handle_event (event, window);
+    view_patients_btn.handle_event (event, window);
+    view_doctors_btn.handle_event  (event, window);
+    view_appts_btn.handle_event    (event, window);
+    unpaid_bills_btn.handle_event  (event, window);
+    discharge_btn.handle_event     (event, window);
+    security_log_btn.handle_event  (event, window);
+    daily_report_btn.handle_event  (event, window);
+    logout_btn.handle_event        (event, window);
+}
+
+void AdminMenuScreen::update() {}
+
+void AdminMenuScreen::render(sf::RenderWindow& window) {
+    heading_label.render(window);
+    divider_label.render(window);
+
+    add_doctor_btn.render    (window);
+    remove_doctor_btn.render (window);
+    view_patients_btn.render (window);
+    view_doctors_btn.render  (window);
+    view_appts_btn.render    (window);
+    unpaid_bills_btn.render  (window);
+    discharge_btn.render     (window);
+    security_log_btn.render  (window);
+    daily_report_btn.render  (window);
+    logout_btn.render        (window);
+
+    status_label.render(window);
+}
+
+This is in adminmenuscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+#include "adddoctorscreen.hpp"
+#include "viewpatientsscreen.hpp"
+#include "dailyreportscreen.hpp"
+
+// ── AdminMenuScreen ───────────────────────────────────────────────────────
+// Main hub shown after admin logs in successfully.
+// Routes to all 10 admin sub-screens.
+// ─────────────────────────────────────────────────────────────────────────
+
+class AdminMenuScreen : public Screen {
+private:
+    // Header
+    Label heading_label;
+    Label divider_label;
+
+    // 10 menu buttons — split into two columns of 5 for better layout
+    Button add_doctor_btn;
+    Button remove_doctor_btn;
+    Button view_patients_btn;
+    Button view_doctors_btn;
+    Button view_appts_btn;
+    Button unpaid_bills_btn;
+    Button discharge_btn;
+    Button security_log_btn;
+    Button daily_report_btn;
+    Button logout_btn;
+
+    // Feedback label
+    Label status_label;
+
+public:
+    AdminMenuScreen();
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
+    void update() override;
+    void render(sf::RenderWindow& window) override;
+};
+
+
+
+This is in doctormenuscreen.cpp
+
+// #include "doctormenuscreen.hpp"
+// #include "loginscreen.hpp"
+
+// // Sub-screens — uncomment as you build each one
+// // #include "doctor/todayappointmentsscreen.hpp"
+// // #include "doctor/markcompletedscreen.hpp"
+// // #include "doctor/marknoshowscreen.hpp"
+// // #include "doctor/writeprescriptionscreen.hpp"
+// // #include "doctor/patienthistoryscreen.hpp"
+
+// static void safe_copy(char* dst, const char* src, std::size_t max) {
+//     std::size_t i = 0;
+//     while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+//     dst[i] = '\0';
+// }
+
+// DoctorMenuScreen::DoctorMenuScreen(const char* id)
+//     : welcome_label("Welcome, Dr. [Name] | Specialization: [spec]"),  // TODO: fill from file
+//       divider_label("==============================================="),
+//       today_appt_btn  ("1. Today's Appointments",    380, 40),
+//       complete_btn    ("2. Mark Appointment Complete",380, 40),
+//       noshow_btn      ("3. Mark Appointment No-Show", 380, 40),
+//       prescription_btn("4. Write Prescription",       380, 40),
+//       history_btn     ("5. View Patient History",     380, 40),
+//       logout_btn      ("6. Logout",                   380, 40),
+//       status_label("")
+// {
+//     safe_copy(doctor_id, id, sizeof(doctor_id));
+
+//     // ── Layout ────────────────────────────────────────────────────────────
+//     welcome_label.set_position(50, 30);
+//     divider_label.set_position(50, 60);
+
+//     float btn_x    = 210.f;
+//     float btn_y    = 100.f;
+//     float btn_step = 65.f;
+
+//     today_appt_btn.set_position  (btn_x, btn_y + btn_step * 0);
+//     complete_btn.set_position    (btn_x, btn_y + btn_step * 1);
+//     noshow_btn.set_position      (btn_x, btn_y + btn_step * 2);
+//     prescription_btn.set_position(btn_x, btn_y + btn_step * 3);
+//     history_btn.set_position     (btn_x, btn_y + btn_step * 4);
+//     logout_btn.set_position      (btn_x, btn_y + btn_step * 5);
+
+//     status_label.set_position(50, 570);
+
+//     // ── Button handlers ───────────────────────────────────────────────────
+
+//     today_appt_btn.set_on_click([this]() {
+//         status_label.set_text("Opening: Today's Appointments...");
+//         // TODO: UIManager::instance().set_screen(new TodayAppointmentsScreen(doctor_id));
+//     });
+
+//     complete_btn.set_on_click([this]() {
+//         status_label.set_text("Opening: Mark Appointment Complete...");
+//         // TODO: UIManager::instance().set_screen(new MarkCompletedScreen(doctor_id));
+//     });
+
+//     noshow_btn.set_on_click([this]() {
+//         status_label.set_text("Opening: Mark Appointment No-Show...");
+//         // TODO: UIManager::instance().set_screen(new MarkNoShowScreen(doctor_id));
+//     });
+
+//     prescription_btn.set_on_click([this]() {
+//         status_label.set_text("Opening: Write Prescription...");
+//         // TODO: UIManager::instance().set_screen(new WritePrescriptionScreen(doctor_id));
+//     });
+
+//     history_btn.set_on_click([this]() {
+//         status_label.set_text("Opening: View Patient History...");
+//         // TODO: UIManager::instance().set_screen(new PatientHistoryScreen(doctor_id));
+//     });
+
+//     logout_btn.set_on_click([this]() {
+//         UIManager::instance().set_screen(new LoginScreen());
+//     });
+
+//     // TODO: load real doctor name + specialization
+//     // e.g. Doctor* d = FileHandler::load_doctor(doctor_id, "doctors.txt");
+//     //      char buf[120];
+//     //      ... build "Welcome, Dr. X | Specialization: Y" manually ...
+//     //      welcome_label.set_text(buf);
+// }
+
+// void DoctorMenuScreen::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+//     today_appt_btn.handle_event  (event, window);
+//     complete_btn.handle_event    (event, window);
+//     noshow_btn.handle_event      (event, window);
+//     prescription_btn.handle_event(event, window);
+//     history_btn.handle_event     (event, window);
+//     logout_btn.handle_event      (event, window);
+// }
+
+// void DoctorMenuScreen::update() {}
+
+// void DoctorMenuScreen::render(sf::RenderWindow& window) {
+//     welcome_label.render(window);
+//     divider_label.render(window);
+
+//     today_appt_btn.render  (window);
+//     complete_btn.render    (window);
+//     noshow_btn.render      (window);
+//     prescription_btn.render(window);
+//     history_btn.render     (window);
+//     logout_btn.render      (window);
+
+//     status_label.render(window);
+// }
+#include "doctormenuscreen.hpp"
+#include "loginscreen.hpp"
+#include "todayappointmentsscreen.hpp"
+#include "markcompletedscreen.hpp"
+#include "marknoshowscreen.hpp"
+#include "writeprescriptionscreen.hpp"
+#include "patienthistoryscreen.hpp"
+ 
+static void safe_copy(char* dst, const char* src, std::size_t max) {
+    std::size_t i = 0;
+    while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+    dst[i] = '\0';
+}
+ 
+DoctorMenuScreen::DoctorMenuScreen(const char* id)
+    : welcome_label("Welcome, Dr. [Name] | Specialization: [spec]"),
+      divider_label("==============================================="),
+      today_appt_btn  ("1. Today's Appointments",     380, 40),
+      complete_btn    ("2. Mark Appointment Complete", 380, 40),
+      noshow_btn      ("3. Mark Appointment No-Show",  380, 40),
+      prescription_btn("4. Write Prescription",        380, 40),
+      history_btn     ("5. View Patient History",      380, 40),
+      logout_btn      ("6. Logout",                    380, 40),
+      status_label("")
+{
+    safe_copy(doctor_id, id, sizeof(doctor_id));
+ 
+    welcome_label.set_position(50, 30);
+    divider_label.set_position(50, 60);
+ 
+    float btn_x = 210.f, btn_y = 100.f, step = 65.f;
+    today_appt_btn.set_position  (btn_x, btn_y + step * 0);
+    complete_btn.set_position    (btn_x, btn_y + step * 1);
+    noshow_btn.set_position      (btn_x, btn_y + step * 2);
+    prescription_btn.set_position(btn_x, btn_y + step * 3);
+    history_btn.set_position     (btn_x, btn_y + step * 4);
+    logout_btn.set_position      (btn_x, btn_y + step * 5);
+    status_label.set_position(50, 570);
+ 
+    today_appt_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new TodayAppointmentsScreen(doctor_id));
+    });
+    complete_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new MarkCompletedScreen(doctor_id));
+    });
+    noshow_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new MarkNoShowScreen(doctor_id));
+    });
+    prescription_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new WritePrescriptionScreen(doctor_id));
+    });
+    history_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new PatientHistoryScreen(doctor_id));
+    });
+    logout_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new LoginScreen());
+    });
+}
+ 
+void DoctorMenuScreen::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    today_appt_btn.handle_event  (event, window);
+    complete_btn.handle_event    (event, window);
+    noshow_btn.handle_event      (event, window);
+    prescription_btn.handle_event(event, window);
+    history_btn.handle_event     (event, window);
+    logout_btn.handle_event      (event, window);
+}
+ 
+void DoctorMenuScreen::update() {}
+ 
+void DoctorMenuScreen::render(sf::RenderWindow& window) {
+    welcome_label.render(window);
+    divider_label.render(window);
+    today_appt_btn.render  (window);
+    complete_btn.render    (window);
+    noshow_btn.render      (window);
+    prescription_btn.render(window);
+    history_btn.render     (window);
+    logout_btn.render      (window);
+    status_label.render(window);
+}
+
+
+This is in doctormenuscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── DoctorMenuScreen ──────────────────────────────────────────────────────
+// Main hub shown after a doctor logs in successfully.
+// Shows name + specialization in the header, routes to 6 sub-screens.
+// ─────────────────────────────────────────────────────────────────────────
+
+class DoctorMenuScreen : public Screen {
+private:
+    char doctor_id[64];
+
+    // Header
+    Label welcome_label;      // "Welcome, Dr. [Name] | Specialization: [spec]"
+    Label divider_label;
+
+    // 6 menu buttons
+    Button today_appt_btn;
+    Button complete_btn;
+    Button noshow_btn;
+    Button prescription_btn;
+    Button history_btn;
+    Button logout_btn;
+
+    // Feedback label
+    Label status_label;
+
+public:
+    DoctorMenuScreen(const char* id);
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
+    void update() override;
+    void render(sf::RenderWindow& window) override;
+};
+
+This is in logindialog.cpp
+#include "logindialog.hpp"
+#include "loginscreen.hpp"
+// #include "../../src/file_handler.hpp"   // Uncomment when backend is ready
+#include <iostream>
+#include <fstream>
+
+LoginDialog::LoginDialog(UserRole user_role)
+    : role(user_role),
+      heading("Login"),
+      id_label("ID:"),
+      password_label("Password:"),
+      error_label(""),
+      attempts_label(""),
+      login_btn("Login"),
+      back_btn("Back")
+{
+    // Set heading based on role
+    if (role == PATIENT)      heading = Label("Patient Login");
+    else if (role == DOCTOR)  heading = Label("Doctor Login");
+    else                      heading = Label("Admin Login");
+
+    // Layout — centered in an 800x600 window
+    heading.set_position(275, 80);
+    id_label.set_position(170, 195);
+    password_label.set_position(170, 265);
+    id_field.set_position(270, 185);
+    password_field.set_position(270, 255);
+    login_btn.set_position(220, 340);
+    back_btn.set_position(360, 340);
+    error_label.set_position(190, 400);    // red error text below buttons
+    attempts_label.set_position(190, 430); // attempt counter
+
+    // ── Login button handler ──────────────────────────────────────────────
+    login_btn.set_on_click([this]() {
+        if (locked) return;
+
+        sf::String id_input = id_field.get_text();
+        sf::String pw_input = password_field.get_text();
+
+        // Convert sf::String → char buffer
+        char id_buf[128], pw_buf[128];
+        std::size_t id_len = std::min(id_input.getSize(), sizeof(id_buf) - 1);
+        std::size_t pw_len = std::min(pw_input.getSize(), sizeof(pw_buf) - 1);
+        for (std::size_t i = 0; i < id_len; ++i) id_buf[i] = static_cast<char>(id_input[i]);
+        id_buf[id_len] = '\0';
+        for (std::size_t i = 0; i < pw_len; ++i) pw_buf[i] = static_cast<char>(pw_input[i]);
+        pw_buf[pw_len] = '\0';
+
+        // ── Validation (stub — replace with real FileHandler calls) ────────
+        bool success = false;
+        // TODO: uncomment once FileHandler is ready
+        // if      (role == PATIENT) success = FileHandler::validate_patient(id_buf, pw_buf, "patients.txt");
+        // else if (role == DOCTOR)  success = FileHandler::validate_doctor (id_buf, pw_buf, "doctors.txt");
+        // else                      success = FileHandler::validate_admin  (id_buf, pw_buf, "admin.txt");
+
+        // Temporary stub so UI flow can be tested without backend
+        success = (id_buf[0] != '\0' && pw_buf[0] != '\0'); // any non-empty input passes
+
+        if (success) {
+            error_label.set_text("Login successful!");
+            attempts_label.set_text("");
+            // TODO: navigate to the correct menu screen, e.g.:
+            // if (role == PATIENT) UIManager::instance().set_screen(new PatientMenuScreen(id_buf));
+            // else if (role == DOCTOR) UIManager::instance().set_screen(new DoctorMenuScreen(id_buf));
+            // else UIManager::instance().set_screen(new AdminMenuScreen());
+        } else {
+            failed_attempts++;
+            char attempt_msg[64];
+            // Build "Attempt X/3" string manually (no std::string)
+            attempt_msg[0] = 'A'; attempt_msg[1] = 't'; attempt_msg[2] = 't';
+            attempt_msg[3] = 'e'; attempt_msg[4] = 'm'; attempt_msg[5] = 'p';
+            attempt_msg[6] = 't'; attempt_msg[7] = ' ';
+            attempt_msg[8] = '0' + static_cast<char>(failed_attempts);
+            attempt_msg[9] = '/'; attempt_msg[10] = '3'; attempt_msg[11] = '\0';
+            attempts_label.set_text(attempt_msg);
+
+            if (failed_attempts >= 3) {
+                locked = true;
+                error_label.set_text("Account locked. Contact admin.");
+                attempts_label.set_text("");
+
+                // Log to security_log.txt
+                std::ofstream log("security_log.txt", std::ios::app);
+                if (log.is_open()) {
+                    log << "LOCKED,role=" << role << ",id=" << id_buf << "\n";
+                    log.close();
+                }
+                should_close = false; // keep window open so message is visible
+            } else {
+                error_label.set_text("Invalid ID or password.");
+            }
+        }
+    });
+
+    // ── Back button handler ───────────────────────────────────────────────
+    back_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new LoginScreen());
+    });
+}
+
+void LoginDialog::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    if (locked) {
+        // Only allow Back when locked
+        back_btn.handle_event(event, window);
+        return;
+    }
+    id_field.handle_event(event, window);
+    password_field.handle_event(event, window);
+    login_btn.handle_event(event, window);
+    back_btn.handle_event(event, window);
+}
+
+void LoginDialog::update() {}
+
+void LoginDialog::render(sf::RenderWindow& window) {
+    heading.render(window);
+    id_label.render(window);
+    password_label.render(window);
+    id_field.render(window);
+    password_field.render(window);
+
+    if (!locked) {
+        login_btn.render(window);
+    }
+    back_btn.render(window);
+
+    error_label.render(window);
+    attempts_label.render(window);
+}
+
+This is in logindialog.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+#include "../components/userrole.hpp"
+
+class LoginScreen; // forward declaration
+
+class LoginDialog : public Screen {
+private:
+    UserRole role;
+    Label heading;
+    Label id_label;
+    Label password_label;
+    Label error_label;        // shows error / lock messages
+    Label attempts_label;     // shows "Attempt X/3"
+    TextField id_field;
+    TextField password_field;
+    Button login_btn;
+    Button back_btn;
+
+    int failed_attempts = 0;
+    bool locked = false;
+
+public:
+    LoginDialog(UserRole user_role);
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
+    void update() override;
+    void render(sf::RenderWindow& window) override;
+    void handle_event(sf::RenderWindow& window, const sf::Event& event);
+};
+
+This is in loginscreen.hpp
+#include "loginscreen.hpp"
+#include "logindialog.hpp"
+#include <iostream>
+
+LoginScreen::LoginScreen()
+    : heading("Medicore (HMS)"),
+      label("Login as: "),
+      patient_btn("1. Patient"),
+      doctor_btn("2. Doctor"),
+      admin_btn("3. Admin"),
+      exit_btn("4. Exit")
+{
+    heading.set_position(50, 50);
+    label.set_position(100, 100);
+    patient_btn.set_position(150, 150);
+    doctor_btn.set_position(150, 200);
+    admin_btn.set_position(150, 250);
+    exit_btn.set_position(150, 300);
+
+    patient_btn.set_on_click([]() {
+        std::cout << "Loging as Patient: " << std::endl;
+        UIManager::instance().set_screen(new LoginDialog(PATIENT));
+    });
+    doctor_btn.set_on_click([]() {
+        std::cout << "Loging as Doctor: " << std::endl;
+        UIManager::instance().set_screen(new LoginDialog(DOCTOR));
+    });
+    admin_btn.set_on_click([]() {
+        std::cout << "Loging as Admin: " << std::endl;
+        UIManager::instance().set_screen(new LoginDialog(ADMIN));
+    });
+    exit_btn.set_on_click([this]() {
+        std::cout << "Exiting!" << std::endl;
+        should_close = true;
+    });
+}
+
+void LoginScreen::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    patient_btn.handle_event(event, window);
+    doctor_btn.handle_event(event, window);
+    admin_btn.handle_event(event, window);
+    exit_btn.handle_event(event, window);
+}
+
+void LoginScreen::update() {}
+void LoginScreen::render(sf::RenderWindow& window) {
+    label.render(window);
+    heading.render(window);
+    patient_btn.render(window);
+    doctor_btn.render(window);
+    admin_btn.render(window);
+    exit_btn.render(window);
+}
+
+This is in loginscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+#include "../components/userrole.hpp"
+
+
+class LoginScreen : public Screen {
+private:
+    Label heading;
+    Label label;
+    Button patient_btn;
+    Button doctor_btn;
+    Button admin_btn;
+    Button exit_btn;
+public:
+    LoginScreen();
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
+    void update() override;
+    void render(sf::RenderWindow& window) override;
+};
+
+
+This is in patientmenuscreen.cpp
+#include "patientmenuscreen.hpp"
+#include "loginscreen.hpp"
+
+// Sub-screens — uncomment includes as you build each one
+// #include "patient/bookappointmentscreen.hpp"
+// #include "patient/cancelappointmentscreen.hpp"
+// #include "patient/viewappointmentsscreen.hpp"
+// #include "patient/viewrecordsscreen.hpp"
+// #include "patient/viewbillsscreen.hpp"
+// #include "patient/paybillscreen.hpp"
+// #include "patient/topupscreen.hpp"
+
+#include <cstring>  // for strncpy (char arrays, no std::string)
+
+// ── Helper: copy a char[] safely ─────────────────────────────────────────
+static void safe_copy(char* dst, const char* src, std::size_t max) {
+    std::size_t i = 0;
+    while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+    dst[i] = '\0';
+}
+
+PatientMenuScreen::PatientMenuScreen(const char* id)
+    : welcome_label("Welcome, Patient"),   // TODO: replace with real name from file
+      balance_label("Balance: PKR ----"),  // TODO: load from FileHandler
+      divider_label("========================"),
+      book_btn    ("1. Book Appointment",    360, 40),
+      cancel_btn  ("2. Cancel Appointment",  360, 40),
+      view_appt_btn("3. My Appointments",    360, 40),
+      records_btn ("4. Medical Records",     360, 40),
+      bills_btn   ("5. My Bills",            360, 40),
+      pay_btn     ("6. Pay Bill",            360, 40),
+      topup_btn   ("7. Top Up Balance",      360, 40),
+      logout_btn  ("8. Logout",              360, 40),
+      status_label("")
+{
+    safe_copy(patient_id, id, sizeof(patient_id));
+
+    // ── Layout (800×600 window) ───────────────────────────────────────────
+    welcome_label.set_position(50, 30);
+    balance_label.set_position(50, 60);
+    divider_label.set_position(50, 90);
+
+    float btn_x    = 220.f;
+    float btn_y    = 130.f;
+    float btn_step = 52.f;
+
+    book_btn.set_position     (btn_x, btn_y + btn_step * 0);
+    cancel_btn.set_position   (btn_x, btn_y + btn_step * 1);
+    view_appt_btn.set_position(btn_x, btn_y + btn_step * 2);
+    records_btn.set_position  (btn_x, btn_y + btn_step * 3);
+    bills_btn.set_position    (btn_x, btn_y + btn_step * 4);
+    pay_btn.set_position      (btn_x, btn_y + btn_step * 5);
+    topup_btn.set_position    (btn_x, btn_y + btn_step * 6);
+    logout_btn.set_position   (btn_x, btn_y + btn_step * 7);
+
+    status_label.set_position(50, 570);
+
+    // ── Button handlers ───────────────────────────────────────────────────
+
+    book_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Book Appointment...");
+        // TODO: UIManager::instance().set_screen(new BookAppointmentScreen(patient_id));
+    });
+
+    cancel_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Cancel Appointment...");
+        // TODO: UIManager::instance().set_screen(new CancelAppointmentScreen(patient_id));
+    });
+
+    view_appt_btn.set_on_click([this]() {
+        status_label.set_text("Opening: My Appointments...");
+        // TODO: UIManager::instance().set_screen(new ViewAppointmentsScreen(patient_id));
+    });
+
+    records_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Medical Records...");
+        // TODO: UIManager::instance().set_screen(new ViewRecordsScreen(patient_id));
+    });
+
+    bills_btn.set_on_click([this]() {
+        status_label.set_text("Opening: My Bills...");
+        // TODO: UIManager::instance().set_screen(new ViewBillsScreen(patient_id));
+    });
+
+    pay_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Pay Bill...");
+        // TODO: UIManager::instance().set_screen(new PayBillScreen(patient_id));
+    });
+
+    topup_btn.set_on_click([this]() {
+        status_label.set_text("Opening: Top Up Balance...");
+        // TODO: UIManager::instance().set_screen(new TopUpScreen(patient_id));
+    });
+
+    logout_btn.set_on_click([this]() {
+        UIManager::instance().set_screen(new LoginScreen());
+    });
+
+    // TODO: load real patient name and balance via FileHandler
+    // e.g.  Patient* p = FileHandler::load_patient(patient_id, "patients.txt");
+    //       welcome_label.set_text("Welcome, " + p->get_name());
+    //       refresh_balance_label();
+}
+
+void PatientMenuScreen::refresh_balance_label() {
+    // TODO: read updated balance from patients.txt via FileHandler and call
+    //       balance_label.set_text("Balance: PKR " + formatted_balance);
+}
+
+void PatientMenuScreen::handle_event(sf::RenderWindow& window, const sf::Event& event) {
+    book_btn.handle_event     (event, window);
+    cancel_btn.handle_event   (event, window);
+    view_appt_btn.handle_event(event, window);
+    records_btn.handle_event  (event, window);
+    bills_btn.handle_event    (event, window);
+    pay_btn.handle_event      (event, window);
+    topup_btn.handle_event    (event, window);
+    logout_btn.handle_event   (event, window);
+}
+
+void PatientMenuScreen::update() {}
+
+void PatientMenuScreen::render(sf::RenderWindow& window) {
+    welcome_label.render(window);
+    balance_label.render(window);
+    divider_label.render(window);
+
+    book_btn.render     (window);
+    cancel_btn.render   (window);
+    view_appt_btn.render(window);
+    records_btn.render  (window);
+    bills_btn.render    (window);
+    pay_btn.render      (window);
+    topup_btn.render    (window);
+    logout_btn.render   (window);
+
+    status_label.render(window);
+}
+
+
+This is in patientmenuscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── PatientMenuScreen ─────────────────────────────────────────────────────
+// Main hub shown after a patient logs in successfully.
+// Displays name + balance, and routes to each sub-screen.
+// patient_id is stored as a char array (no std::string per project rules).
+// ─────────────────────────────────────────────────────────────────────────
+
+class PatientMenuScreen : public Screen {
+private:
+    char patient_id[64];
+
+    // Header labels
+    Label welcome_label;
+    Label balance_label;
+    Label divider_label;
+
+    // 8 menu buttons
+    Button book_btn;
+    Button cancel_btn;
+    Button view_appt_btn;
+    Button records_btn;
+    Button bills_btn;
+    Button pay_btn;
+    Button topup_btn;
+    Button logout_btn;
+
+    // Status / feedback label at the bottom
+    Label status_label;
+
+    void refresh_balance_label();   // re-reads balance from file and updates label
+
+public:
+    // Pass the patient's ID string; screen loads name + balance from file
+    PatientMenuScreen(const char* id);
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
+    void update() override;
+    void render(sf::RenderWindow& window) override;
+};
+
+
+this is in screen.hpp
+#pragma once
+#include <SFML/Graphics.hpp>
+
+class Screen {
+public:
+    bool should_close = false;
+
+    virtual ~Screen() = default;
+
+    virtual void handle_event(sf::RenderWindow&, const sf::Event&) = 0;
+    virtual void update() = 0;
+    virtual void render(sf::RenderWindow&) = 0;
+};
+
+This is in app.cpp
+#include "app.hpp"
+#include "screens/loginscreen.hpp"
+#include "screens/logindialog.hpp"
+#include "screens/patientmenuscreen.hpp"
+#include "screens/doctormenuscreen.hpp"
+#include "screens/adminmenuscreen.hpp"
+#include "components/ui_manager.hpp"
+
+void App::run()
+{
+    sf::RenderWindow window(sf::VideoMode({800, 600}), "MediCore HMS");
+
+    // Start at the role-selection login screen
+    UIManager::instance().set_screen(new LoginScreen());
+
+    while (window.isOpen())
+    {
+        while (auto event = window.pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+                window.close();
+
+            UIManager::instance().handle_event(window, *event);
+        }
+
+        // The LoginScreen sets should_close when Exit is chosen
+        Screen* current = UIManager::instance().get_screen();
+        if (current && current->should_close)
+            window.close();
+
+        window.clear(sf::Color(30, 30, 30));  // dark background
+        UIManager::instance().render(window);
+        window.display();
+    }
+}
+
+This is in app.hpp
+#pragma once
+
+
+class App {
+
+    
+    public:
+        void run();
+};
+
+This is in bookappointmentscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── BookAppointmentScreen ─────────────────────────────────────────────────
+// Step 1: enter specialization → show matching doctors
+// Step 2: enter doctor ID → enter date → pick time slot
+// All backend calls are stubbed with // TODO comments.
+// ─────────────────────────────────────────────────────────────────────────
+
+class BookAppointmentScreen : public Screen {
+private:
+    char patient_id[64];
+
+    // ── Header ────────────────────────────────────────────────────────────
+    Label  heading;
+    Label  divider;
+
+    // ── Step 1: specialization search ────────────────────────────────────
+    Label      spec_label;
+    TextField  spec_field;
+    Button     search_btn;
+
+    // ── Step 2: doctor ID ─────────────────────────────────────────────────
+    Label      doc_id_label;
+    TextField  doc_id_field;
+
+    // ── Step 3: date ──────────────────────────────────────────────────────
+    Label      date_label;
+    TextField  date_field;        // DD-MM-YYYY
+
+    // ── Step 4: time slot ─────────────────────────────────────────────────
+    Label      slot_label;
+    TextField  slot_field;        // e.g. 09:00
+
+    // ── Actions ───────────────────────────────────────────────────────────
+    Button     book_btn;
+    Button     back_btn;
+
+    // ── Feedback ──────────────────────────────────────────────────────────
+    ColorLabel status_label;      // red for errors, green for success
+    Label      results_label;     // shows doctor list after search
+
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+
+public:
+    BookAppointmentScreen(const char* pid)
+        : heading("Book Appointment"),
+          divider("=============================="),
+          spec_label("Specialization:"),
+          search_btn("Search Doctors", 160, 36),
+          doc_id_label("Doctor ID:"),
+          date_label("Date (DD-MM-YYYY):"),
+          slot_label("Time Slot (e.g. 09:00):"),
+          book_btn("Book Appointment", 200, 40),
+          back_btn("Back", 100, 40),
+          status_label(""),
+          results_label("")
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+
+        // ── Layout ────────────────────────────────────────────────────────
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+
+        // Row 1 — specialization
+        spec_label.set_position(50, 90);
+        spec_field.set_position(220, 80);
+        search_btn.set_position(490, 80);
+
+        // Doctor list area (text only, updated after search)
+        results_label.set_position(50, 130);
+
+        // Row 2 — doctor ID
+        doc_id_label.set_position(50, 220);
+        doc_id_field.set_position(220, 210);
+
+        // Row 3 — date
+        date_label.set_position(50, 280);
+        date_field.set_position(220, 270);
+
+        // Row 4 — time slot
+        slot_label.set_position(50, 340);
+        slot_field.set_position(220, 330);
+
+        // Buttons
+        book_btn.set_position(200, 400);
+        back_btn.set_position(430, 400);
+
+        // Status
+        status_label.set_position(50, 460);
+
+        // ── Handlers ──────────────────────────────────────────────────────
+
+        search_btn.set_on_click([this]() {
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("Searching...");
+            results_label.set_text("");
+
+            sf::String spec_input = spec_field.get_text();
+            if (spec_input.isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a specialization.");
+                return;
+            }
+
+            // TODO: replace with FileHandler call
+            // char spec_buf[64];
+            // ... convert sf::String to char buf ...
+            // Doctor* matches = FileHandler::find_doctors_by_spec(spec_buf, "doctors.txt", count);
+            // if (count == 0) { status_label.set_text("No doctors available for that specialization."); return; }
+            // Build display string from matches array
+
+            // Stub: show placeholder result
+            results_label.set_text("ID  Name                  Fee\n"
+                                   "-----------------------------------\n"
+                                   "(results will appear here after backend integration)");
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("Doctors loaded. Enter Doctor ID below.");
+        });
+
+        book_btn.set_on_click([this]() {
+            sf::String doc_input  = doc_id_field.get_text();
+            sf::String date_input = date_field.get_text();
+            sf::String slot_input = slot_field.get_text();
+
+            if (doc_input.isEmpty() || date_input.isEmpty() || slot_input.isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("All fields are required.");
+                return;
+            }
+
+            // TODO: convert inputs to char bufs then call:
+            // 1. Validator::validate_date(date_buf)         → throw InvalidInputException
+            // 2. FileHandler::find_doctor(doc_id_buf, ...)  → throw if not found
+            // 3. Check slot availability via appointments.txt → throw SlotUnavailableException
+            // 4. Check patient balance >= doctor fee         → throw InsufficientFundsException
+            // 5. patient -= fee  (overloaded -=)
+            // 6. FileHandler::append_appointment(...)
+            // 7. FileHandler::append_bill(...)
+            // 8. FileHandler::update_patient_balance(...)
+
+            // Stub success
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment booked successfully. (stub)");
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+            UIManager::instance().set_screen(nullptr); // replace with correct screen
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        spec_field.handle_event(event, window);
+        doc_id_field.handle_event(event, window);
+        date_field.handle_event(event, window);
+        slot_field.handle_event(event, window);
+        search_btn.handle_event(event, window);
+        book_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        spec_label.render(window);
+        spec_field.render(window);
+        search_btn.render(window);
+        results_label.render(window);
+        doc_id_label.render(window);
+        doc_id_field.render(window);
+        date_label.render(window);
+        date_field.render(window);
+        slot_label.render(window);
+        slot_field.render(window);
+        book_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in appointmentscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── CancelAppointmentScreen ───────────────────────────────────────────────
+// Shows patient's pending appointments, prompts for appointment ID to cancel.
+// Refund is issued via overloaded += on Patient.
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class CancelAppointmentScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      list_heading;
+    Label      appt_list;       // pending appointments displayed here
+ 
+    Label      appt_id_label;
+    TextField  appt_id_field;
+ 
+    Button     cancel_btn;
+    Button     back_btn;
+ 
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load_pending_appointments() {
+        // TODO: FileHandler::get_pending_appointments(patient_id, "appointments.txt", ...)
+        // Build display string: "ID | Doctor Name | Date | Time Slot"
+        appt_list.set_text("ID   Doctor Name            Date         Slot\n"
+                           "---------------------------------------------\n"
+                           "(pending appointments will load from backend)");
+    }
+ 
+public:
+    CancelAppointmentScreen(const char* pid)
+        : heading("Cancel Appointment"),
+          divider("=============================="),
+          list_heading("Your Pending Appointments:"),
+          appt_list(""),
+          appt_id_label("Appointment ID to cancel:"),
+          cancel_btn("Cancel Appointment", 200, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        list_heading.set_position(50, 85);
+        appt_list.set_position(50, 115);
+ 
+        appt_id_label.set_position(50, 280);
+        appt_id_field.set_position(310, 270);
+ 
+        cancel_btn.set_position(180, 340);
+        back_btn.set_position(410, 340);
+ 
+        status_label.set_position(50, 410);
+ 
+        load_pending_appointments();
+ 
+        cancel_btn.set_on_click([this]() {
+            sf::String id_input = appt_id_field.get_text();
+            if (id_input.isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an Appointment ID.");
+                return;
+            }
+ 
+            // TODO: char appt_buf[32]; convert id_input → appt_buf
+            // 1. Validate appointment belongs to this patient and status == "pending"
+            //    → if not: status red, "Invalid appointment ID."
+            // 2. Update appointment status to "cancelled" in appointments.txt
+            // 3. patient += doctor_fee  (overloaded +=)
+            // 4. FileHandler::update_patient_balance(...)
+            // 5. Update bill status to "cancelled" in bills.txt
+ 
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment cancelled. PKR [fee] refunded. (stub)");
+            appt_id_field.clear();
+            load_pending_appointments();
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        appt_id_field.handle_event(event, window);
+        cancel_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        list_heading.render(window);
+        appt_list.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        cancel_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in cancelappointmentscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── BookAppointmentScreen ─────────────────────────────────────────────────
+// Step 1: enter specialization → show matching doctors
+// Step 2: enter doctor ID → enter date → pick time slot
+// All backend calls are stubbed with // TODO comments.
+// ─────────────────────────────────────────────────────────────────────────
+
+class BookAppointmentScreen : public Screen {
+private:
+    char patient_id[64];
+
+    // ── Header ────────────────────────────────────────────────────────────
+    Label  heading;
+    Label  divider;
+
+    // ── Step 1: specialization search ────────────────────────────────────
+    Label      spec_label;
+    TextField  spec_field;
+    Button     search_btn;
+
+    // ── Step 2: doctor ID ─────────────────────────────────────────────────
+    Label      doc_id_label;
+    TextField  doc_id_field;
+
+    // ── Step 3: date ──────────────────────────────────────────────────────
+    Label      date_label;
+    TextField  date_field;        // DD-MM-YYYY
+
+    // ── Step 4: time slot ─────────────────────────────────────────────────
+    Label      slot_label;
+    TextField  slot_field;        // e.g. 09:00
+
+    // ── Actions ───────────────────────────────────────────────────────────
+    Button     book_btn;
+    Button     back_btn;
+
+    // ── Feedback ──────────────────────────────────────────────────────────
+    ColorLabel status_label;      // red for errors, green for success
+    Label      results_label;     // shows doctor list after search
+
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+
+public:
+    BookAppointmentScreen(const char* pid)
+        : heading("Book Appointment"),
+          divider("=============================="),
+          spec_label("Specialization:"),
+          search_btn("Search Doctors", 160, 36),
+          doc_id_label("Doctor ID:"),
+          date_label("Date (DD-MM-YYYY):"),
+          slot_label("Time Slot (e.g. 09:00):"),
+          book_btn("Book Appointment", 200, 40),
+          back_btn("Back", 100, 40),
+          status_label(""),
+          results_label("")
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+
+        // ── Layout ────────────────────────────────────────────────────────
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+
+        // Row 1 — specialization
+        spec_label.set_position(50, 90);
+        spec_field.set_position(220, 80);
+        search_btn.set_position(490, 80);
+
+        // Doctor list area (text only, updated after search)
+        results_label.set_position(50, 130);
+
+        // Row 2 — doctor ID
+        doc_id_label.set_position(50, 220);
+        doc_id_field.set_position(220, 210);
+
+        // Row 3 — date
+        date_label.set_position(50, 280);
+        date_field.set_position(220, 270);
+
+        // Row 4 — time slot
+        slot_label.set_position(50, 340);
+        slot_field.set_position(220, 330);
+
+        // Buttons
+        book_btn.set_position(200, 400);
+        back_btn.set_position(430, 400);
+
+        // Status
+        status_label.set_position(50, 460);
+
+        // ── Handlers ──────────────────────────────────────────────────────
+
+        search_btn.set_on_click([this]() {
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("Searching...");
+            results_label.set_text("");
+
+            sf::String spec_input = spec_field.get_text();
+            if (spec_input.isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a specialization.");
+                return;
+            }
+
+            // TODO: replace with FileHandler call
+            // char spec_buf[64];
+            // ... convert sf::String to char buf ...
+            // Doctor* matches = FileHandler::find_doctors_by_spec(spec_buf, "doctors.txt", count);
+            // if (count == 0) { status_label.set_text("No doctors available for that specialization."); return; }
+            // Build display string from matches array
+
+            // Stub: show placeholder result
+            results_label.set_text("ID  Name                  Fee\n"
+                                   "-----------------------------------\n"
+                                   "(results will appear here after backend integration)");
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("Doctors loaded. Enter Doctor ID below.");
+        });
+
+        book_btn.set_on_click([this]() {
+            sf::String doc_input  = doc_id_field.get_text();
+            sf::String date_input = date_field.get_text();
+            sf::String slot_input = slot_field.get_text();
+
+            if (doc_input.isEmpty() || date_input.isEmpty() || slot_input.isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("All fields are required.");
+                return;
+            }
+
+            // TODO: convert inputs to char bufs then call:
+            // 1. Validator::validate_date(date_buf)         → throw InvalidInputException
+            // 2. FileHandler::find_doctor(doc_id_buf, ...)  → throw if not found
+            // 3. Check slot availability via appointments.txt → throw SlotUnavailableException
+            // 4. Check patient balance >= doctor fee         → throw InsufficientFundsException
+            // 5. patient -= fee  (overloaded -=)
+            // 6. FileHandler::append_appointment(...)
+            // 7. FileHandler::append_bill(...)
+            // 8. FileHandler::update_patient_balance(...)
+
+            // Stub success
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment booked successfully. (stub)");
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+            UIManager::instance().set_screen(nullptr); // replace with correct screen
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        spec_field.handle_event(event, window);
+        doc_id_field.handle_event(event, window);
+        date_field.handle_event(event, window);
+        slot_field.handle_event(event, window);
+        search_btn.handle_event(event, window);
+        book_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        spec_label.render(window);
+        spec_field.render(window);
+        search_btn.render(window);
+        results_label.render(window);
+        doc_id_label.render(window);
+        doc_id_field.render(window);
+        date_label.render(window);
+        date_field.render(window);
+        slot_label.render(window);
+        slot_field.render(window);
+        book_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in patientsignupscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── SignupScreen ──────────────────────────────────────────────────────────
+// Patient self-registration. Admin signup is handled in AdminSignupScreen.
+// TODO: connect to FileHandler::append_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class SignupScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+ 
+    Label      name_label;      TextField  name_field;
+    Label      age_label;       TextField  age_field;
+    Label      gender_label;    TextField  gender_field;   // M or F
+    Label      contact_label;   TextField  contact_field;
+    Label      pass_label;      TextField  pass_field;
+ 
+    Button     signup_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+public:
+    SignupScreen()
+        : heading("Patient Signup"),
+          divider("===================="),
+          name_label("Name:"),
+          age_label("Age:"),
+          gender_label("Gender (M/F):"),
+          contact_label("Contact (11 digits):"),
+          pass_label("Password (min 6):"),
+          signup_btn("Create Account", 180, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+ 
+        float lx = 50, fx = 260, y = 90, step = 60;
+        name_label.set_position(lx, y);           name_field.set_position(fx, y - 8);       y += step;
+        age_label.set_position(lx, y);            age_field.set_position(fx, y - 8);        y += step;
+        gender_label.set_position(lx, y);         gender_field.set_position(fx, y - 8);     y += step;
+        contact_label.set_position(lx, y);        contact_field.set_position(fx, y - 8);    y += step;
+        pass_label.set_position(lx, y);           pass_field.set_position(fx, y - 8);       y += step;
+ 
+        signup_btn.set_position(160, y + 10);
+        back_btn.set_position(360, y + 10);
+        status_label.set_position(50, y + 70);
+ 
+        signup_btn.set_on_click([this]() {
+            if (name_field.get_text().isEmpty() || age_field.get_text().isEmpty() ||
+                gender_field.get_text().isEmpty() || contact_field.get_text().isEmpty() ||
+                pass_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("All fields are required.");
+                return;
+            }
+            // TODO: validate contact == 11 digits, password >= 6 chars (Validator)
+            // TODO: generate new patient ID (max existing + 1 from patients.txt)
+            // TODO: FileHandler::append_patient(name, age, gender, contact, password, balance=0)
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Account created successfully! Please login. (stub)");
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new LoginScreen());
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        name_field.handle_event(event, window);
+        age_field.handle_event(event, window);
+        gender_field.handle_event(event, window);
+        contact_field.handle_event(event, window);
+        pass_field.handle_event(event, window);
+        signup_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        name_label.render(window);      name_field.render(window);
+        age_label.render(window);       age_field.render(window);
+        gender_label.render(window);    gender_field.render(window);
+        contact_label.render(window);   contact_field.render(window);
+        pass_label.render(window);      pass_field.render(window);
+        signup_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in viewappointmentsscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── ViewAppointmentsScreen ────────────────────────────────────────────────
+// Shows all appointments for this patient sorted by date ascending.
+// TODO: connect to FileHandler::get_appointments_by_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class ViewAppointmentsScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      appt_list;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_all_appointments(patient_id, "appointments.txt", arr, count)
+        // Sort by date ascending (implement manually)
+        // Build display string: ID | Doctor Name | Spec | Date | Slot | Status
+        appt_list.set_text("ID  | Doctor            | Date        | Slot  | Status\n"
+                           "--------------------------------------------------------\n"
+                           "(appointments will load from backend)");
+    }
+ 
+public:
+    ViewAppointmentsScreen(const char* pid)
+        : heading("My Appointments"),
+          divider("===================="),
+          col_header(""),
+          appt_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        appt_list.set_position(50, 80);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        appt_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in viewmedicalrecordscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── ViewRecordsScreen ─────────────────────────────────────────────────────
+// Shows all prescriptions for this patient grouped by appointment,
+// sorted by date descending.
+// TODO: connect to FileHandler::get_prescriptions_by_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class ViewRecordsScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      records_list;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_prescriptions_by_patient(patient_id, "prescriptions.txt", arr, count)
+        // Sort by date descending (implement manually)
+        // Build display: Date | Doctor Name | Medicines | Notes
+        records_list.set_text("Date        | Doctor            | Medicines       | Notes\n"
+                              "----------------------------------------------------------\n"
+                              "(medical records will load from backend)");
+    }
+ 
+public:
+    ViewRecordsScreen(const char* pid)
+        : heading("My Medical Records"),
+          divider("===================="),
+          records_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        records_list.set_position(50, 80);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        records_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in viewbillscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── ViewBillsScreen ───────────────────────────────────────────────────────
+// Shows all bills for this patient + total outstanding unpaid amount.
+// TODO: connect to FileHandler::get_bills_by_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class ViewBillsScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      bills_list;
+    Label      total_label;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_bills_by_patient(patient_id, "bills.txt", arr, count)
+        // Build display: Bill ID | Appt ID | Amount | Status | Date
+        // Sum unpaid amounts → update total_label
+        bills_list.set_text("BillID | ApptID | Amount (PKR) | Status  | Date\n"
+                            "------------------------------------------------\n"
+                            "(bills will load from backend)");
+        total_label.set_text("Total Outstanding: PKR ---- (stub)");
+    }
+ 
+public:
+    ViewBillsScreen(const char* pid)
+        : heading("My Bills"),
+          divider("===================="),
+          bills_list(""),
+          total_label(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        bills_list.set_position(50, 80);
+        total_label.set_position(50, 460);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        bills_list.render(window);
+        total_label.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in paybillscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── ViewBillsScreen ───────────────────────────────────────────────────────
+// Shows all bills for this patient + total outstanding unpaid amount.
+// TODO: connect to FileHandler::get_bills_by_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class ViewBillsScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      bills_list;
+    Label      total_label;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_bills_by_patient(patient_id, "bills.txt", arr, count)
+        // Build display: Bill ID | Appt ID | Amount | Status | Date
+        // Sum unpaid amounts → update total_label
+        bills_list.set_text("BillID | ApptID | Amount (PKR) | Status  | Date\n"
+                            "------------------------------------------------\n"
+                            "(bills will load from backend)");
+        total_label.set_text("Total Outstanding: PKR ---- (stub)");
+    }
+ 
+public:
+    ViewBillsScreen(const char* pid)
+        : heading("My Bills"),
+          divider("===================="),
+          bills_list(""),
+          total_label(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        bills_list.set_position(50, 80);
+        total_label.set_position(50, 460);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        bills_list.render(window);
+        total_label.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in topupbalancescreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── TopUpScreen ───────────────────────────────────────────────────────────
+// Patient enters amount to add to balance.
+// Uses overloaded += on Patient. Up to 3 invalid attempts before back.
+// TODO: connect to FileHandler
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class TopUpScreen : public Screen {
+private:
+    char patient_id[64];
+    int  bad_attempts = 0;
+ 
+    Label      heading;
+    Label      divider;
+    Label      balance_label;
+    Label      amount_label;
+    TextField  amount_field;
+    Button     topup_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+public:
+    TopUpScreen(const char* pid)
+        : heading("Top Up Balance"),
+          divider("===================="),
+          balance_label("Current Balance: PKR ---- (stub)"),
+          amount_label("Amount to add (PKR):"),
+          topup_btn("Top Up", 120, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        balance_label.set_position(50, 90);
+ 
+        amount_label.set_position(50, 180);
+        amount_field.set_position(280, 170);
+ 
+        topup_btn.set_position(180, 240);
+        back_btn.set_position(320, 240);
+        status_label.set_position(50, 305);
+ 
+        // TODO: load real balance
+        // Patient* p = FileHandler::load_patient(patient_id, "patients.txt");
+        // balance_label.set_text("Current Balance: PKR " + float_to_str(p->balance));
+ 
+        topup_btn.set_on_click([this]() {
+            if (amount_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an amount.");
+                bad_attempts++;
+                if (bad_attempts >= 3) {
+                    // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+                }
+                return;
+            }
+            // TODO: parse amount as float
+            // if amount <= 0 → throw InvalidInputException, bad_attempts++, if >= 3 go back
+            // patient += amount  (overloaded +=)
+            // FileHandler::update_patient_balance(patient_id, new_balance, "patients.txt")
+            // refresh balance_label
+            bad_attempts = 0;
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Balance updated. New balance: PKR ---- (stub)");
+            amount_field.clear();
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        amount_field.handle_event(event, window);
+        topup_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        balance_label.render(window);
+        amount_label.render(window);
+        amount_field.render(window);
+        topup_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in todayappointmentsscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+class TodayAppointmentsScreen : public Screen {
+private:
+    char doctor_id[64];
+ 
+    Label      heading;
+    Label      appt_list;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: get today's date via time()/strftime()
+        // TODO: FileHandler::get_appointments_by_doctor_today(doctor_id, date, arr, count)
+        // Sort by time slot ascending
+        // Build string: Appt ID | Patient Name | Slot | Status
+        appt_list.set_text("ID  | Patient Name         | Slot  | Status\n"
+                           "--------------------------------------------\n"
+                           "(today's appointments load from backend)");
+    }
+ 
+public:
+    TodayAppointmentsScreen(const char* did)
+        : heading("Today's Appointments"),
+          appt_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+ 
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        appt_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in markcompletedscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+class MarkCompletedScreen : public Screen {
+private:
+    char doctor_id[64];
+ 
+    Label      heading;
+    Label      appt_list;       // today's pending appointments
+    Label      appt_id_label;
+    TextField  appt_id_field;
+    Button     confirm_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_pending_appointments_today(doctor_id, arr, count)
+        appt_list.set_text("ID  | Patient Name         | Slot\n"
+                           "----------------------------------\n"
+                           "(today's pending appointments load from backend)");
+    }
+ 
+public:
+    MarkCompletedScreen(const char* did)
+        : heading("Mark Appointment Complete"),
+          appt_list(""),
+          appt_id_label("Appointment ID:"),
+          confirm_btn("Mark Complete", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+ 
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        appt_id_label.set_position(50, 300);
+        appt_id_field.set_position(210, 290);
+        confirm_btn.set_position(180, 360);
+        back_btn.set_position(360, 360);
+        status_label.set_position(50, 420);
+ 
+        load();
+ 
+        confirm_btn.set_on_click([this]() {
+            if (appt_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an Appointment ID.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor, status==pending, date==today
+            // TODO: FileHandler::update_appointment_status(appt_id, "completed", "appointments.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment marked as completed. (stub)");
+            appt_id_field.clear();
+            load();
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        appt_id_field.handle_event(event, window);
+        confirm_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        appt_list.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        confirm_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is in marknoshowscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+class MarkNoShowScreen : public Screen {
+private:
+    char doctor_id[64];
+ 
+    Label      heading;
+    Label      appt_list;
+    Label      appt_id_label;
+    TextField  appt_id_field;
+    Button     confirm_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_pending_appointments_today(doctor_id, arr, count)
+        appt_list.set_text("ID  | Patient Name         | Slot\n"
+                           "----------------------------------\n"
+                           "(today's pending appointments load from backend)");
+    }
+ 
+public:
+    MarkNoShowScreen(const char* did)
+        : heading("Mark Appointment No-Show"),
+          appt_list(""),
+          appt_id_label("Appointment ID:"),
+          confirm_btn("Mark No-Show", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+ 
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        appt_id_label.set_position(50, 300);
+        appt_id_field.set_position(210, 290);
+        confirm_btn.set_position(180, 360);
+        back_btn.set_position(360, 360);
+        status_label.set_position(50, 420);
+ 
+        load();
+ 
+        confirm_btn.set_on_click([this]() {
+            if (appt_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an Appointment ID.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor, status==pending, date==today
+            // TODO: FileHandler::update_appointment_status(appt_id, "no_show", "appointments.txt")
+            // TODO: FileHandler::update_bill_status(appt_id, "cancelled", "bills.txt")
+            // No refund on no-show
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment marked as no-show. (stub)");
+            appt_id_field.clear();
+            load();
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        appt_id_field.handle_event(event, window);
+        confirm_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        appt_list.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        confirm_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is in writeprescriptionscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+class WritePrescriptionScreen : public Screen {
+private:
+    char doctor_id[64];
+ 
+    Label      heading;
+    Label      appt_id_label;
+    TextField  appt_id_field;
+    Label      medicines_label;
+    TextField  medicines_field;   // e.g. Paracetamol 500mg;Amoxicillin 250mg
+    Label      notes_label;
+    TextField  notes_field;
+    Button     save_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+public:
+    WritePrescriptionScreen(const char* did)
+        : heading("Write Prescription"),
+          appt_id_label("Appointment ID:"),
+          medicines_label("Medicines (Name Dose;...):"),
+          notes_label("Notes:"),
+          save_btn("Save Prescription", 180, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+ 
+        heading.set_position(50, 20);
+ 
+        appt_id_label.set_position(50, 90);
+        appt_id_field.set_position(220, 80);
+ 
+        medicines_label.set_position(50, 160);
+        medicines_field.set_position(50, 190);   // wider field below label
+ 
+        notes_label.set_position(50, 260);
+        notes_field.set_position(50, 290);
+ 
+        save_btn.set_position(180, 370);
+        back_btn.set_position(380, 370);
+        status_label.set_position(50, 430);
+ 
+        save_btn.set_on_click([this]() {
+            if (appt_id_field.get_text().isEmpty() || medicines_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Appointment ID and medicines are required.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor and status == "completed"
+            // TODO: check prescriptions.txt — if already exists → error
+            // TODO: FileHandler::append_prescription(appt_id, doctor_id, patient_id, date, medicines, notes)
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Prescription saved. (stub)");
+            appt_id_field.clear();
+            medicines_field.clear();
+            notes_field.clear();
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        appt_id_field.handle_event(event, window);
+        medicines_field.handle_event(event, window);
+        notes_field.handle_event(event, window);
+        save_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        medicines_label.render(window);
+        medicines_field.render(window);
+        notes_label.render(window);
+        notes_field.render(window);
+        save_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in patienthistoryscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+ 
+class PatientHistoryScreen : public Screen {
+private:
+    char doctor_id[64];
+ 
+    Label      heading;
+    Label      patient_id_label;
+    TextField  patient_id_field;
+    Button     search_btn;
+    Label      records_list;
+    Button     back_btn;
+    ColorLabel status_label;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+public:
+    PatientHistoryScreen(const char* did)
+        : heading("View Patient Medical History"),
+          patient_id_label("Patient ID:"),
+          search_btn("Search", 100, 40),
+          records_list(""),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+ 
+        heading.set_position(50, 20);
+        patient_id_label.set_position(50, 90);
+        patient_id_field.set_position(180, 80);
+        search_btn.set_position(450, 80);
+        records_list.set_position(50, 140);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        search_btn.set_on_click([this]() {
+            if (patient_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a Patient ID.");
+                return;
+            }
+            // TODO: validate patient exists AND has at least one completed appt with this doctor
+            //       if not → "Access denied. You can only view records of your own patients."
+            // TODO: FileHandler::get_prescriptions_by_patient_and_doctor(patient_id, doctor_id, arr, count)
+            // Sort by date descending
+            // Build display string
+            records_list.set_text("Date        | Medicines              | Notes\n"
+                                  "---------------------------------------------\n"
+                                  "(records load from backend)");
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("");
+        });
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        patient_id_field.handle_event(event, window);
+        search_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        patient_id_label.render(window);
+        patient_id_field.render(window);
+        search_btn.render(window);
+        records_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in adddoctorscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── AddDoctorScreen ───────────────────────────────────────────────────────
+// Admin enters doctor details; saved to doctors.txt via FileHandler.
+// ─────────────────────────────────────────────────────────────────────────
+class AddDoctorScreen : public Screen {
+private:
+    Label     heading;
+    Label     divider;
+
+    Label     name_label;       TextField name_field;
+    Label     spec_label;       TextField spec_field;
+    Label     fee_label;        TextField fee_field;
+    Label     contact_label;    TextField contact_field;
+    Label     pass_label;       TextField pass_field;
+
+    Button      add_btn;
+    Button      back_btn;
+    ColorLabel  status_label;
+
+public:
+    AddDoctorScreen()
+        : heading("Add Doctor"),
+          divider("===================="),
+          name_label("Name:"),
+          spec_label("Specialization:"),
+          fee_label("Consultation Fee (PKR):"),
+          contact_label("Contact (11 digits):"),
+          pass_label("Password (min 6):"),
+          add_btn("Add Doctor", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+
+        float lx = 50, fx = 280, y = 90, step = 60;
+        name_label.set_position   (lx, y);  name_field.set_position   (fx, y - 8);  y += step;
+        spec_label.set_position   (lx, y);  spec_field.set_position   (fx, y - 8);  y += step;
+        fee_label.set_position    (lx, y);  fee_field.set_position    (fx, y - 8);  y += step;
+        contact_label.set_position(lx, y);  contact_field.set_position(fx, y - 8);  y += step;
+        pass_label.set_position   (lx, y);  pass_field.set_position   (fx, y - 8);  y += step;
+
+        add_btn.set_position (160, y + 10);
+        back_btn.set_position(340, y + 10);
+        status_label.set_position(50, y + 70);
+
+        add_btn.set_on_click([this]() {
+            if (name_field.get_text().isEmpty()    || spec_field.get_text().isEmpty()    ||
+                fee_field.get_text().isEmpty()     || contact_field.get_text().isEmpty() ||
+                pass_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("All fields are required.");
+                return;
+            }
+            // TODO: validate contact == 11 digits, fee > 0, password >= 6 (Validator)
+            // TODO: generate new doctor ID (max existing + 1 from doctors.txt)
+            // TODO: FileHandler::append_doctor(name, spec, fee, contact, password, "doctors.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Doctor added successfully. (stub)");
+            name_field.clear(); spec_field.clear(); fee_field.clear();
+            contact_field.clear(); pass_field.clear();
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        name_field.handle_event   (event, window);
+        spec_field.handle_event   (event, window);
+        fee_field.handle_event    (event, window);
+        contact_field.handle_event(event, window);
+        pass_field.handle_event   (event, window);
+        add_btn.handle_event      (event, window);
+        back_btn.handle_event     (event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        name_label.render(window);    name_field.render(window);
+        spec_label.render(window);    spec_field.render(window);
+        fee_label.render(window);     fee_field.render(window);
+        contact_label.render(window); contact_field.render(window);
+        pass_label.render(window);    pass_field.render(window);
+        add_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in removedoctorscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── RemoveDoctorScreen ────────────────────────────────────────────────────
+// Admin enters a Doctor ID to remove. Cannot remove if doctor has any
+// pending (future) appointments.
+// ─────────────────────────────────────────────────────────────────────────
+class RemoveDoctorScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      doc_id_label;
+    TextField  doc_id_field;
+    Button     remove_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+
+public:
+    RemoveDoctorScreen()
+        : heading("Remove Doctor"),
+          divider("===================="),
+          doc_id_label("Doctor ID:"),
+          remove_btn("Remove Doctor", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        heading.set_position    (50,  20);
+        divider.set_position    (50,  48);
+        doc_id_label.set_position(50, 110);
+        doc_id_field.set_position(200, 100);
+        remove_btn.set_position (160, 170);
+        back_btn.set_position   (340, 170);
+        status_label.set_position(50, 240);
+
+        remove_btn.set_on_click([this]() {
+            if (doc_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a Doctor ID.");
+                return;
+            }
+            // TODO: FileHandler::find_doctor(id, "doctors.txt") → throw if not found
+            // TODO: Check appointments.txt — if any appointment for this doctor
+            //       has status == "pending" → throw (cannot remove active doctor)
+            // TODO: FileHandler::remove_doctor(id, "doctors.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Doctor removed successfully. (stub)");
+            doc_id_field.clear();
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        doc_id_field.handle_event(event, window);
+        remove_btn.handle_event  (event, window);
+        back_btn.handle_event    (event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        doc_id_label.render(window);
+        doc_id_field.render(window);
+        remove_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+This is in viewpatientsscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── ViewPatientsScreen ────────────────────────────────────────────────────
+// Loads and displays all patients from patients.txt.
+// ─────────────────────────────────────────────────────────────────────────
+class ViewPatientsScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      patient_list;
+    ColorLabel status_label;
+    Button     back_btn;
+
+    void load() {
+        // TODO: FileHandler::get_all_patients("patients.txt", arr, count)
+        // Build display: ID | Name | Age | Gender | Contact | Balance
+        col_header.set_text("ID  | Name            | Age | Gender | Contact     | Balance (PKR)");
+        patient_list.set_text("--------------------------------------------------------------------\n"
+                              "(patient records will load from backend)");
+    }
+
+public:
+    ViewPatientsScreen()
+        : heading("All Patients"),
+          divider("===================="),
+          col_header(""),
+          patient_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        heading.set_position     (50,  20);
+        divider.set_position     (50,  48);
+        col_header.set_position  (50,  80);
+        patient_list.set_position(50, 108);
+        status_label.set_position(50, 500);
+        back_btn.set_position    (50, 540);
+
+        load();
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        col_header.render(window);
+        patient_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This in viewdoctorsscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── ViewDoctorsScreen ─────────────────────────────────────────────────────
+// Loads and displays all doctors from doctors.txt.
+// ─────────────────────────────────────────────────────────────────────────
+class ViewDoctorsScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      doctor_list;
+    ColorLabel status_label;
+    Button     back_btn;
+
+    void load() {
+        // TODO: FileHandler::get_all_doctors("doctors.txt", arr, count)
+        // Build display: ID | Name | Specialization | Fee | Contact
+        col_header.set_text("ID  | Name            | Specialization  | Fee (PKR) | Contact");
+        doctor_list.set_text("-------------------------------------------------------------------\n"
+                             "(doctor records will load from backend)");
+    }
+
+public:
+    ViewDoctorsScreen()
+        : heading("All Doctors"),
+          divider("===================="),
+          col_header(""),
+          doctor_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        heading.set_position    (50,  20);
+        divider.set_position    (50,  48);
+        col_header.set_position (50,  80);
+        doctor_list.set_position(50, 108);
+        status_label.set_position(50, 500);
+        back_btn.set_position   (50, 540);
+
+        load();
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        col_header.render(window);
+        doctor_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This in in viewappointmentsscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+ 
+// ── ViewAppointmentsScreen ────────────────────────────────────────────────
+// Shows all appointments for this patient sorted by date ascending.
+// TODO: connect to FileHandler::get_appointments_by_patient(...)
+// ─────────────────────────────────────────────────────────────────────────
+ 
+class ViewAppointmentsScreen : public Screen {
+private:
+    char patient_id[64];
+ 
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      appt_list;
+    ColorLabel status_label;
+    Button     back_btn;
+ 
+    static void safe_copy(char* dst, const char* src, std::size_t max) {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        dst[i] = '\0';
+    }
+ 
+    void load() {
+        // TODO: FileHandler::get_all_appointments(patient_id, "appointments.txt", arr, count)
+        // Sort by date ascending (implement manually)
+        // Build display string: ID | Doctor Name | Spec | Date | Slot | Status
+        appt_list.set_text("ID  | Doctor            | Date        | Slot  | Status\n"
+                           "--------------------------------------------------------\n"
+                           "(appointments will load from backend)");
+    }
+ 
+public:
+    ViewAppointmentsScreen(const char* pid)
+        : heading("My Appointments"),
+          divider("===================="),
+          col_header(""),
+          appt_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(patient_id, pid, sizeof(patient_id));
+ 
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        appt_list.set_position(50, 80);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+ 
+        load();
+ 
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+        });
+    }
+ 
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+ 
+    void update() override {}
+ 
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        appt_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in unpaidbillscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── UnpaidBillsScreen ─────────────────────────────────────────────────────
+// Shows all bills with status == "unpaid" and the running total.
+// ─────────────────────────────────────────────────────────────────────────
+class UnpaidBillsScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      bills_list;
+    Label      total_label;
+    ColorLabel status_label;
+    Button     back_btn;
+
+    void load() {
+        // TODO: FileHandler::get_all_bills("bills.txt", arr, count)
+        // Filter: status == "unpaid"
+        // Sum amounts → update total_label
+        // Build display: BillID | PatientName | DoctorName | Amount (PKR) | Date
+        col_header.set_text("BillID | Patient         | Doctor          | Amount (PKR) | Date");
+        bills_list.set_text("----------------------------------------------------------------------\n"
+                            "(unpaid bills will load from backend)");
+        total_label.set_text("Total Unpaid: PKR ---- (stub)");
+    }
+
+public:
+    UnpaidBillsScreen()
+        : heading("Unpaid Bills"),
+          divider("===================="),
+          col_header(""),
+          bills_list(""),
+          total_label(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        heading.set_position    (50,  20);
+        divider.set_position    (50,  48);
+        col_header.set_position (50,  80);
+        bills_list.set_position (50, 108);
+        total_label.set_position(50, 460);
+        status_label.set_position(50, 500);
+        back_btn.set_position   (50, 540);
+
+        load();
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        col_header.render(window);
+        bills_list.render(window);
+        total_label.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+This is in dischargepatientscreen.hpp
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── DischargePatientScreen ────────────────────────────────────────────────
+// Admin enters a Patient ID to discharge (mark as discharged in patients.txt).
+// Cannot discharge if patient has any unpaid bills or pending appointments.
+// ─────────────────────────────────────────────────────────────────────────
+class DischargePatientScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      info_label;      // shows patient summary after lookup
+    Label      patient_id_label;
+    TextField  patient_id_field;
+    Button     lookup_btn;
+    Button     discharge_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+
+public:
+    DischargePatientScreen()
+        : heading("Discharge Patient"),
+          divider("===================="),
+          info_label(""),
+          patient_id_label("Patient ID:"),
+          lookup_btn("Look Up", 110, 40),
+          discharge_btn("Discharge", 130, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        heading.set_position        (50,  20);
+        divider.set_position        (50,  48);
+        patient_id_label.set_position(50, 110);
+        patient_id_field.set_position(200, 100);
+        lookup_btn.set_position     (470, 100);
+        info_label.set_position     (50,  160);
+        discharge_btn.set_position  (180, 320);
+        back_btn.set_position       (330, 320);
+        status_label.set_position   (50,  390);
+
+        lookup_btn.set_on_click([this]() {
+            if (patient_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a Patient ID.");
+                return;
+            }
+            // TODO: FileHandler::find_patient(id, "patients.txt") → throw if not found
+            // TODO: show Name, Balance, pending appointments count, unpaid bills count
+            // Stub:
+            info_label.set_text("Name:    [Patient Name]         (stub)\n"
+                                "Balance: PKR ----\n"
+                                "Pending Appointments: --\n"
+                                "Unpaid Bills:         --");
+            status_label.set_color(sf::Color::White);
+            status_label.set_text("Patient found. Review details before discharging.");
+        });
+
+        discharge_btn.set_on_click([this]() {
+            if (patient_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please look up a patient first.");
+                return;
+            }
+            // TODO: re-validate patient exists
+            // TODO: if any bill status == "unpaid"     → throw (cannot discharge)
+            // TODO: if any appointment status == "pending" → throw (cannot discharge)
+            // TODO: FileHandler::set_patient_discharged(id, "patients.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Patient discharged successfully. (stub)");
+            patient_id_field.clear();
+            info_label.set_text("");
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        patient_id_field.handle_event(event, window);
+        lookup_btn.handle_event      (event, window);
+        discharge_btn.handle_event   (event, window);
+        back_btn.handle_event        (event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        patient_id_label.render(window);
+        patient_id_field.render(window);
+        lookup_btn.render(window);
+        info_label.render(window);
+        discharge_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is in securitylogscreen.hpp
+
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── SecurityLogScreen ─────────────────────────────────────────────────────
+// Reads and displays all entries from security_log.txt.
+// Each entry is written by LoginDialog when an account gets locked (3 fails).
+// Format in file: LOCKED,role=<role>,id=<id>
+// ─────────────────────────────────────────────────────────────────────────
+class SecurityLogScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      col_header;
+    Label      log_list;
+    ColorLabel status_label;
+    Button     back_btn;
+
+    void load() {
+        // TODO: open security_log.txt with std::ifstream and read line by line
+        // Parse each line: LOCKED,role=X,id=Y
+        // Build display string with all entries
+        // If file empty or not found → show "No security events recorded."
+        col_header.set_text("Event    | Role    | ID");
+        log_list.set_text("--------------------------------\n"
+                          "(security log entries will load from security_log.txt)");
+    }
+
+public:
+    SecurityLogScreen()
+        : heading("Security Log"),
+          divider("===================="),
+          col_header(""),
+          log_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        heading.set_position    (50,  20);
+        divider.set_position    (50,  48);
+        col_header.set_position (50,  80);
+        log_list.set_position   (50, 108);
+        status_label.set_position(50, 500);
+        back_btn.set_position   (50, 540);
+
+        load();
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        col_header.render(window);
+        log_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+
+This is in dailyreportscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── DailyReportScreen ─────────────────────────────────────────────────────
+// Generates a summary report for today:
+//   - Total appointments (pending / completed / no-show / cancelled)
+//   - Total revenue collected today (completed appointments)
+//   - Total unpaid bills outstanding
+//   - New patients registered today
+// ─────────────────────────────────────────────────────────────────────────
+class DailyReportScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+    Label      date_label;
+    Label      appt_heading;
+    Label      appt_stats;
+    Label      revenue_heading;
+    Label      revenue_stats;
+    Label      bills_heading;
+    Label      bills_stats;
+    Label      patients_heading;
+    Label      patients_stats;
+    ColorLabel status_label;
+    Button     back_btn;
+
+    void load() {
+        // TODO: get today's date via time()/strftime() → char date_buf[16]
+        // TODO: scan appointments.txt and count by status for today's date
+        // TODO: sum fees of completed appointments today → revenue
+        // TODO: count unpaid bills in bills.txt
+        // TODO: count patients registered today in patients.txt
+        date_label.set_text     ("Report Date: DD-MM-YYYY  (stub)");
+
+        appt_stats.set_text     ("  Pending   : --\n"
+                                 "  Completed : --\n"
+                                 "  No-Show   : --\n"
+                                 "  Cancelled : --\n"
+                                 "  Total     : --");
+
+        revenue_stats.set_text  ("  PKR ----  (stub)");
+        bills_stats.set_text    ("  Count: --   Total: PKR ----  (stub)");
+        patients_stats.set_text ("  New registrations today: --  (stub)");
+    }
+
+public:
+    DailyReportScreen()
+        : heading("Daily Report"),
+          divider("===================="),
+          date_label(""),
+          appt_heading("-- Appointments Today --"),
+          appt_stats(""),
+          revenue_heading("-- Revenue Collected Today --"),
+          revenue_stats(""),
+          bills_heading("-- Outstanding Unpaid Bills --"),
+          bills_stats(""),
+          patients_heading("-- New Patients Today --"),
+          patients_stats(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        heading.set_position        (50,  20);
+        divider.set_position        (50,  48);
+        date_label.set_position     (50,  78);
+
+        appt_heading.set_position   (50, 115);
+        appt_stats.set_position     (50, 140);
+
+        revenue_heading.set_position(50, 285);
+        revenue_stats.set_position  (50, 310);
+
+        bills_heading.set_position  (50, 350);
+        bills_stats.set_position    (50, 375);
+
+        patients_heading.set_position(50, 415);
+        patients_stats.set_position  (50, 440);
+
+        status_label.set_position   (50, 490);
+        back_btn.set_position       (50, 530);
+
+        load();
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        date_label.render(window);
+        appt_heading.render(window);
+        appt_stats.render(window);
+        revenue_heading.render(window);
+        revenue_stats.render(window);
+        bills_heading.render(window);
+        bills_stats.render(window);
+        patients_heading.render(window);
+        patients_stats.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+
+This is in signupscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+
+// ── SignupScreen ──────────────────────────────────────────────────────────
+// Patient self-registration.
+// TODO: connect FileHandler::append_patient() and Validator when ready.
+// ─────────────────────────────────────────────────────────────────────────
+class SignupScreen : public Screen {
+private:
+    Label      heading;
+    Label      divider;
+
+    Label      name_label;       TextField name_field;
+    Label      age_label;        TextField age_field;
+    Label      gender_label;     TextField gender_field;    // M or F
+    Label      contact_label;    TextField contact_field;   // 11 digits
+    Label      pass_label;       TextField pass_field;      // min 6 chars
+
+    Button     signup_btn;
+    Button     back_btn;
+    ColorLabel status_label;
+
+public:
+    SignupScreen()
+        : heading("Patient Signup"),
+          divider("===================="),
+          name_label("Name:"),
+          age_label("Age:"),
+          gender_label("Gender (M/F):"),
+          contact_label("Contact (11 digits):"),
+          pass_label("Password (min 6):"),
+          signup_btn("Create Account", 180, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+
+        float lx = 50, fx = 280, y = 90, step = 60;
+        name_label.set_position   (lx, y);  name_field.set_position   (fx, y - 8);  y += step;
+        age_label.set_position    (lx, y);  age_field.set_position    (fx, y - 8);  y += step;
+        gender_label.set_position (lx, y);  gender_field.set_position (fx, y - 8);  y += step;
+        contact_label.set_position(lx, y);  contact_field.set_position(fx, y - 8);  y += step;
+        pass_label.set_position   (lx, y);  pass_field.set_position   (fx, y - 8);  y += step;
+
+        signup_btn.set_position(160, y + 10);
+        back_btn.set_position  (360, y + 10);
+        status_label.set_position(50, y + 70);
+
+        signup_btn.set_on_click([this]() {
+            if (name_field.get_text().isEmpty()    || age_field.get_text().isEmpty()    ||
+                gender_field.get_text().isEmpty()  || contact_field.get_text().isEmpty() ||
+                pass_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("All fields are required.");
+                return;
+            }
+            // TODO: Validator::validate_contact(contact_buf)  → 11 digits
+            // TODO: Validator::validate_password(pass_buf)    → min 6 chars
+            // TODO: Validator::validate_age(age_buf)          → positive int
+            // TODO: Validator::validate_gender(gender_buf)    → 'M' or 'F'
+            // TODO: generate new patient ID (read max ID from patients.txt, +1)
+            // TODO: FileHandler::append_patient(id, name, age, gender, contact, password,
+            //                                   balance=0, "patients.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Account created successfully! Please login. (stub)");
+            name_field.clear(); age_field.clear(); gender_field.clear();
+            contact_field.clear(); pass_field.clear();
+        });
+
+        back_btn.set_on_click([this]() {
+            // TODO: UIManager::instance().set_screen(new LoginScreen());
+        });
+    }
+
+    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+        name_field.handle_event   (event, window);
+        age_field.handle_event    (event, window);
+        gender_field.handle_event (event, window);
+        contact_field.handle_event(event, window);
+        pass_field.handle_event   (event, window);
+        signup_btn.handle_event   (event, window);
+        back_btn.handle_event     (event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow& window) override {
+        heading.render(window);
+        divider.render(window);
+        name_label.render(window);    name_field.render(window);
+        age_label.render(window);     age_field.render(window);
+        gender_label.render(window);  gender_field.render(window);
+        contact_label.render(window); contact_field.render(window);
+        pass_label.render(window);    pass_field.render(window);
+        signup_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
