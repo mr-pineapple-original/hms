@@ -1,4 +1,5 @@
 #include "ui_manager.hpp"
+#include "../screens/screen.hpp" 
 
 UIManager* UIManager::s_instance = nullptr;
 

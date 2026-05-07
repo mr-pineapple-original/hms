@@ -38,6 +38,10 @@ add_executable(apphms
     sfml/screens/logindialog.cpp
     sfml/screens/loginscreen.cpp
     sfml/components/ui_manager.cpp
+    sfml/screens/adminmenuscreen.cpp
+    sfml/screens/doctormenuscreen.cpp
+    sfml/screens/patientmenuscreen.cpp
+    
 )
 
 target_include_directories(apphms PRIVATE

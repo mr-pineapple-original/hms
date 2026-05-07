@@ -352,6 +352,22 @@ void HospitalSystem::get_today_date(char* ptr_buffer)
 // }
 
 
+
+HospitalSystem* HospitalSystem::s_instance = nullptr;
+
+HospitalSystem& HospitalSystem::instance()
+{
+    if (s_instance == nullptr)
+        s_instance = new HospitalSystem();
+    return *s_instance;
+}
+
+HospitalSystem::~HospitalSystem()
+{
+    s_instance = nullptr;
+}
+
+
 void HospitalSystem::login_menu()
 {
     int choice = 0;
@@ -2545,3 +2561,33 @@ void HospitalSystem::generate_daily_report()
         }
     }
 }
+
+    Storage<Patient>& HospitalSystem::get_patients()      
+    { 
+        return patients;
+    }
+
+    Storage<Doctor>& HospitalSystem::get_doctors()       
+    { 
+        return doctors;
+    }
+
+    Storage<Admin>& HospitalSystem::get_admins()        
+    { 
+        return admins;
+    }
+
+    Storage<Appointment>& HospitalSystem::get_appointments()  
+    { 
+        return appointments;
+    }
+
+    Storage<Bill>& HospitalSystem::get_bills()         
+    { 
+        return bills;
+    }
+    
+    Storage<Prescription>& HospitalSystem::get_prescriptions() 
+    { 
+        return prescriptions;
+    }

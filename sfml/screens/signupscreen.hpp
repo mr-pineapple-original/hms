@@ -74,7 +74,7 @@ public:
         });
 
         back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new LoginScreen());
+            UIManager::instance().set_screen(new LoginDialog(PATIENT));
         });
     }
 
@@ -103,3 +103,4 @@ public:
         status_label.render(window);
     }
 };
+

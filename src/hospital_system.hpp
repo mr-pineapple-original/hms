@@ -45,6 +45,7 @@
 // };
 
 
+
 #pragma once
 #include "storage.hpp"
 #include "patient.hpp"
@@ -62,43 +63,120 @@
 #include "insufficient_funds_exception.hpp"
 #include "file_not_found_exception.hpp"
 
-class HospitalSystem 
-{
+// class HospitalSystem 
+// {
     
+// private:
+//     Storage<Patient> patients;
+//     Storage<Doctor> doctors;
+//     Storage<Admin> admins;
+//     Storage<Appointment> appointments;
+//     Storage<Bill> bills;
+//     Storage<Prescription> prescriptions;
+
+//     // Respective menu functions
+//     void patient_session(Patient& patient);
+//     void doctor_session(Doctor& doctor);
+//     void admin_session(Admin& admin);
+    
+
+//     // Main functions to be called
+//     void login_menu();
+//     void load_data();
+//     void save_data();
+
+//     // Helper functions
+//     void get_today_date(char* ptr_buffer);
+
+//     // Login functions
+//     void patient_login();
+//     void doctor_login();
+//     void admin_login();
+
+//     // Signup functions
+//     void patient_signup();
+//     void doctor_signup();
+//     void admin_signup();
+
+
+//     // Patient session handlers
+//     void book_appointment(Patient& patient);
+//     void cancel_appointment(Patient& patient);
+//     void view_appointments(Patient& patient);
+//     void view_medical_records(Patient& patient);
+//     void view_bills(Patient& patient);
+//     void pay_bill(Patient& patient);
+//     void top_up_balance(Patient& patient);
+
+
+//     // Doctor session handlers
+//     void view_today_appointments(Doctor& doctor);
+//     void mark_appointment_complete(Doctor& doctor);
+//     void mark_appointment_no_show(Doctor& doctor);
+//     void write_prescription(Doctor& doctor);
+//     void view_patient_history(Doctor& doctor);
+
+//     // Admin session handlers
+//     void add_doctor();
+//     void remove_doctor();
+//     void view_all_patients();
+//     void view_all_doctors();
+//     void view_all_dcotors();
+//     void view_all_appointments();
+//     void view_unpaid_bills();
+//     void discharge_patient();
+//     void view_security_log();
+//     void generate_daily_report();
+// public:
+//     HospitalSystem();
+//     void run(); // entry point
+// };
+
+
+class HospitalSystem
+{
 private:
-    Storage<Patient> patients;
-    Storage<Doctor> doctors;
-    Storage<Admin> admins;
-    Storage<Appointment> appointments;
-    Storage<Bill> bills;
+    static HospitalSystem* s_instance;
+
+    Storage<Patient>      patients;
+    Storage<Doctor>       doctors;
+    Storage<Admin>        admins;
+    Storage<Appointment>  appointments;
+    Storage<Bill>         bills;
     Storage<Prescription> prescriptions;
 
-    // Respective menu functions
-    void patient_session(Patient& patient);
-    void doctor_session(Doctor& doctor);
-    void admin_session(Admin& admin);
-    
-
-    // Main functions to be called
+    // They exist in the console version mate :/
     void login_menu();
-    void load_data();
-    void save_data();
-
-    // Helper functions
-    void get_today_date(char* ptr_buffer);
-
-    // Login functions
     void patient_login();
     void doctor_login();
     void admin_login();
-
-    // Signup functions
     void patient_signup();
     void doctor_signup();
     void admin_signup();
 
+public:
+    HospitalSystem();
+    ~HospitalSystem();
 
-    // Patient session handlers
+    static HospitalSystem& instance();
+
+    // The 3 main functions
+    void load_data();
+    void save_data();
+    void run();  // console entry point only
+
+    // Storage accessors for GUI screens
+    Storage<Patient>& get_patients();
+    Storage<Doctor>& get_doctors();
+    Storage<Admin>& get_admins();
+    Storage<Appointment>& get_appointments();
+    Storage<Bill>& get_bills();
+    Storage<Prescription>& get_prescriptions();
+
+    // Helper
+    void get_today_date(char* ptr_buffer);
+
+    // Patient actions
     void book_appointment(Patient& patient);
     void cancel_appointment(Patient& patient);
     void view_appointments(Patient& patient);
@@ -107,26 +185,26 @@ private:
     void pay_bill(Patient& patient);
     void top_up_balance(Patient& patient);
 
-
-    // Doctor session handlers
+    // Doctor actions
     void view_today_appointments(Doctor& doctor);
     void mark_appointment_complete(Doctor& doctor);
     void mark_appointment_no_show(Doctor& doctor);
     void write_prescription(Doctor& doctor);
     void view_patient_history(Doctor& doctor);
 
-    // Admin session handlers
+    // Admin actions
     void add_doctor();
     void remove_doctor();
     void view_all_patients();
     void view_all_doctors();
-    void view_all_dcotors();
     void view_all_appointments();
     void view_unpaid_bills();
     void discharge_patient();
     void view_security_log();
     void generate_daily_report();
-public:
-    HospitalSystem();
-    void run(); // entry point
+
+    // Session routers — used by GUI screens
+    void patient_session(Patient& patient);
+    void doctor_session(Doctor& doctor);
+    void admin_session(Admin& admin);
 };

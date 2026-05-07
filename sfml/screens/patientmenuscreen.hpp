@@ -3,6 +3,7 @@
 #include "../components/label.hpp"
 #include "../components/button.hpp"
 #include "../components/ui_manager.hpp"
+#include "../src/hospital_system.hpp"
 
 // ── PatientMenuScreen ─────────────────────────────────────────────────────
 // Main hub shown after a patient logs in successfully.
@@ -36,7 +37,7 @@ private:
 
 public:
     // Pass the patient's ID string; screen loads name + balance from file
-    PatientMenuScreen(const char* id);
+    PatientMenuScreen(const char* id, const char* name, double balance);
 
     void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
     void update() override;

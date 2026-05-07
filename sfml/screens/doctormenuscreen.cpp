@@ -109,7 +109,7 @@
 
 #include "doctormenuscreen.hpp"
 #include "loginscreen.hpp"
-#include "todayappointmentsscreen.hpp"
+#include "todayappointmentscreen.hpp"
 #include "markcompletedscreen.hpp"
 #include "marknoshowscreen.hpp"
 #include "writeprescriptionscreen.hpp"

@@ -6,7 +6,7 @@
 #include "../components/ui_manager.hpp"
 #include "../components/userrole.hpp"
 
-class LoginScreen; // forward declaration
+class LoginScreen; 
 
 class LoginDialog : public Screen {
 private:
@@ -20,6 +20,7 @@ private:
     TextField password_field;
     Button login_btn;
     Button back_btn;
+    Button signup_btn;
 
     int failed_attempts = 0;
     bool locked = false;
@@ -29,5 +30,5 @@ public:
     void handle_event(sf::RenderWindow& window, const sf::Event& event) override;
     void update() override;
     void render(sf::RenderWindow& window) override;
-    void handle_event(sf::RenderWindow& window, const sf::Event& event);
+    // void handle_event(sf::RenderWindow& window, const sf::Event& event);
 };
