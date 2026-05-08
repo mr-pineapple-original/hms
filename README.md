@@ -1,5 +1,6 @@
 # MediCore Hospital Management System
 
+Just do ./run.sh in the vscode terminal
 Enter cool description here
 
 
@@ -13,10 +14,10 @@ https://github.com/mr-pineapple-original/hms
 
 ## Prerequisites
 
-- Qt6 Development Libraries
+- Qt6 Development Libraries ( Not needed since we shifted to SFML)
 - CMake 3.16+
 - C++17 Compatible Compiler
-
+- SFML 
 ## Installation
 
 ### Linux

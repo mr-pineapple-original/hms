@@ -225,13 +225,42 @@
 
 
 
-// Helper function 
+// Helper functions 
 
 static bool is_valid_slot(const char* slot) {
     const char* valid_slots[] = {"09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"};
     for (int i = 0; i < 8; i++)
         if (is_char_arrays_equal(slot, valid_slots[i])) return true;
     return false;
+}
+
+
+static bool is_valid_date_format(const char* date) {
+    // Must be exactly DD-MM-YYYY (10 chars)
+    for (int i = 0; i < 10; i++) if (date[i] == '\0') return false;
+    if (date[10] != '\0') return false;
+    if (date[2] != '-' || date[5] != '-') return false;
+    for (int i = 0; i < 10; i++) {
+        if (i == 2 || i == 5) continue;
+        if (date[i] < '0' || date[i] > '9') return false;
+    }
+    int day   = (date[0]-'0')*10 + (date[1]-'0');
+    int month = (date[3]-'0')*10 + (date[4]-'0');
+    int year  = (date[6]-'0')*1000 + (date[7]-'0')*100 + (date[8]-'0')*10 + (date[9]-'0');
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31)     return false;
+    if (year < 2000)              return false;
+    return true;
+}
+
+static bool is_date_before_today(const char* date, const char* today) {
+    int y1=(date[6]-'0')*1000+(date[7]-'0')*100+(date[8]-'0')*10+(date[9]-'0');
+    int y2=(today[6]-'0')*1000+(today[7]-'0')*100+(today[8]-'0')*10+(today[9]-'0');
+    int m1=(date[3]-'0')*10+(date[4]-'0'), m2=(today[3]-'0')*10+(today[4]-'0');
+    int d1=(date[0]-'0')*10+(date[1]-'0'), d2=(today[0]-'0')*10+(today[1]-'0');
+    if (y1 != y2) return y1 < y2;
+    if (m1 != m2) return m1 < m2;
+    return d1 < d2;
 }
 
 
@@ -396,6 +425,28 @@ public:
             int doc_id = 0;
             for (int i = 0; doc_buf[i]; i++) doc_id = doc_id * 10 + (doc_buf[i] - '0');
  
+            if (!is_valid_slot(slot_buf)) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Invalid slot. Use 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, or 16:00.");
+            return;
+            }
+
+            // 2. Validate date format
+            if (!is_valid_date_format(date_buf)) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Invalid date. Use DD-MM-YYYY format.");
+            return;
+            }
+
+            // 3. Validate date is not in the past
+            char today[11];
+            HospitalSystem::instance().get_today_date(today);
+            if (is_date_before_today(date_buf, today)) {
+            status_label.set_color(sf::Color::Red);
+            status_label.set_text("Cannot book an appointment in the past.");
+            return;
+            }
+
             Doctor* ptr_d = HospitalSystem::instance().get_doctors().find(doc_id);
             if (ptr_d == nullptr) {
                 status_label.set_color(sf::Color::Red);
