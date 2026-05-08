@@ -2,3 +2,4 @@
 3,Abdur Rafay,17,Male,03034347524,987,3000
 4,Zara Hussain,25,Female,03331234567,mypass1,0
 5,Zara Hussain,25,Female,03331234567,mypass1,0
+6,Sado,12,Male,03234422155,987,0

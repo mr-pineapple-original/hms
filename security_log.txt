@@ -2,3 +2,4 @@
 6-5-2026 13:23:29,Doctor,456,LOCKED
 6-5-2026 16:8:40,Patient,1,LOCKED
 Locked account for role 0 with ID 324
+8-5-2026 10:35:14,Admin,1,LOCKED

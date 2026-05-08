@@ -138,7 +138,7 @@
 #include "../components/ui_manager.hpp"
 #include "../../src/hospital_system.hpp"
 #include "../../src/file_handler.hpp"
-
+#include "adminsignupscreen.hpp"
 
 // LoginDialog::LoginDialog(UserRole user_role)
 //     : role(user_role),
@@ -420,9 +420,13 @@ LoginDialog::LoginDialog(UserRole user_role)
         }
     });
 
-    // ── Signup button — patients only ─────────────────────────────────────
+    // ── Signup button
     signup_btn.set_on_click([this]() {
+        if(role == PATIENT)
         UIManager::instance().set_screen(new SignupScreen());
+
+        else if(role == ADMIN)
+        UIManager::instance().set_screen(new AdminSignupScreen());
     });
 
     // ── Back button ───────────────────────────────────────────────────────
@@ -444,8 +448,8 @@ void LoginDialog::handle_event(sf::RenderWindow& window, const sf::Event& event)
     login_btn.handle_event     (event, window);
     back_btn.handle_event      (event, window);
 
-    if (role == PATIENT)
-        signup_btn.handle_event(event, window);
+    if (role == PATIENT || role == ADMIN)
+    signup_btn.handle_event(event, window);
 }
 
 void LoginDialog::update() {}
@@ -463,8 +467,9 @@ void LoginDialog::render(sf::RenderWindow& window)
         login_btn.render(window);
         back_btn.render (window);
 
-        if (role == PATIENT)
-            signup_btn.render(window);
+    if (role == PATIENT || role == ADMIN)
+        signup_btn.render(window);
+        
     }
     else
     {
