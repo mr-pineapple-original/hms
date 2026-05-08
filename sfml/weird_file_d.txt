@@ -1,0 +1,502 @@
+This is for todayappointmentscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/ui_manager.hpp"
+#include "doctormenuscreen.hpp"
+#include "../../src/hospital_system.hpp"
+
+class TodayAppointmentsScreen : public Screen
+{
+private:
+    char doctor_id[64];
+
+    Label heading;
+    Label appt_list;
+    ColorLabel status_label;
+    Button back_btn;
+
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
+        dst[i] = '\0';
+    }
+
+    void load()
+    {
+        // TODO: get today's date via time()/strftime()
+        // TODO: FileHandler::get_appointments_by_doctor_today(doctor_id, date, arr, count)
+        // Sort by time slot ascending
+        // Build string: Appt ID | Patient Name | Slot | Status
+        appt_list.set_text("ID  | Patient Name         | Slot  | Status\n"
+                           "--------------------------------------------\n"
+                           "(today's appointments load from backend)");
+    }
+
+public:
+    TodayAppointmentsScreen(const char *did)
+        : heading("Today's Appointments"),
+          appt_list(""),
+          status_label(""),
+          back_btn("Back", 100, 40)
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+
+        load();
+
+        back_btn.set_on_click([this]()
+                              { UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id)); });
+    }
+
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow &window) override
+    {
+        heading.render(window);
+        appt_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
+
+
+This is for markcompletedscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+#include "doctormenuscreen.hpp"
+#include "../../src/hospital_system.hpp"
+
+class MarkCompletedScreen : public Screen
+{
+private:
+    char doctor_id[64];
+
+    Label heading;
+    Label appt_list; // today's pending appointments
+    Label appt_id_label;
+    TextField appt_id_field;
+    Button confirm_btn;
+    Button back_btn;
+    ColorLabel status_label;
+
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
+        dst[i] = '\0';
+    }
+
+    void load()
+    {
+        // TODO: FileHandler::get_pending_appointments_today(doctor_id, arr, count)
+        appt_list.set_text("ID  | Patient Name         | Slot\n"
+                           "----------------------------------\n"
+                           "(today's pending appointments load from backend)");
+    }
+
+public:
+    MarkCompletedScreen(const char *did)
+        : heading("Mark Appointment Complete"),
+          appt_list(""),
+          appt_id_label("Appointment ID:"),
+          confirm_btn("Mark Complete", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        appt_id_label.set_position(50, 300);
+        appt_id_field.set_position(210, 290);
+        confirm_btn.set_position(180, 360);
+        back_btn.set_position(360, 360);
+        status_label.set_position(50, 420);
+
+        load();
+
+        confirm_btn.set_on_click([this]()
+                                 {
+            if (appt_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an Appointment ID.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor, status==pending, date==today
+            // TODO: FileHandler::update_appointment_status(appt_id, "completed", "appointments.txt")
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment marked as completed. (stub)");
+            appt_id_field.clear();
+            load(); });
+
+        back_btn.set_on_click([this]()
+                              { UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id)); });
+    }
+
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
+        appt_id_field.handle_event(event, window);
+        confirm_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow &window) override
+    {
+        heading.render(window);
+        appt_list.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        confirm_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is for marknoshowscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+#include "doctormenuscreen.hpp"
+#include "../../src/hospital_system.hpp"
+
+class MarkNoShowScreen : public Screen
+{
+private:
+    char doctor_id[64];
+
+    Label heading;
+    Label appt_list;
+    Label appt_id_label;
+    TextField appt_id_field;
+    Button confirm_btn;
+    Button back_btn;
+    ColorLabel status_label;
+
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
+        dst[i] = '\0';
+    }
+
+    void load()
+    {
+        // TODO: FileHandler::get_pending_appointments_today(doctor_id, arr, count)
+        appt_list.set_text("ID  | Patient Name         | Slot\n"
+                           "----------------------------------\n"
+                           "(today's pending appointments load from backend)");
+    }
+
+public:
+    MarkNoShowScreen(const char *did)
+        : heading("Mark Appointment No-Show"),
+          appt_list(""),
+          appt_id_label("Appointment ID:"),
+          confirm_btn("Mark No-Show", 160, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+
+        heading.set_position(50, 20);
+        appt_list.set_position(50, 70);
+        appt_id_label.set_position(50, 300);
+        appt_id_field.set_position(210, 290);
+        confirm_btn.set_position(180, 360);
+        back_btn.set_position(360, 360);
+        status_label.set_position(50, 420);
+
+        load();
+
+        confirm_btn.set_on_click([this]()
+                                 {
+            if (appt_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter an Appointment ID.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor, status==pending, date==today
+            // TODO: FileHandler::update_appointment_status(appt_id, "no_show", "appointments.txt")
+            // TODO: FileHandler::update_bill_status(appt_id, "cancelled", "bills.txt")
+            // No refund on no-show
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Appointment marked as no-show. (stub)");
+            appt_id_field.clear();
+            load(); });
+
+        back_btn.set_on_click([this]()
+                              { UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id)); });
+    }
+
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
+        appt_id_field.handle_event(event, window);
+        confirm_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow &window) override
+    {
+        heading.render(window);
+        appt_list.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        confirm_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is for writeprescriptionscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+#include "doctormenuscreen.hpp"
+#include "../../src/hospital_system.hpp"
+
+class WritePrescriptionScreen : public Screen
+{
+private:
+    char doctor_id[64];
+
+    Label heading;
+    Label appt_id_label;
+    TextField appt_id_field;
+    Label medicines_label;
+    TextField medicines_field; // e.g. Paracetamol 500mg;Amoxicillin 250mg
+    Label notes_label;
+    TextField notes_field;
+    Button save_btn;
+    Button back_btn;
+    ColorLabel status_label;
+
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
+        dst[i] = '\0';
+    }
+
+public:
+    WritePrescriptionScreen(const char *did)
+        : heading("Write Prescription"),
+          appt_id_label("Appointment ID:"),
+          medicines_label("Medicines (Name Dose;...):"),
+          notes_label("Notes:"),
+          save_btn("Save Prescription", 180, 40),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+
+        heading.set_position(50, 20);
+
+        appt_id_label.set_position(50, 90);
+        appt_id_field.set_position(220, 80);
+
+        medicines_label.set_position(50, 160);
+        medicines_field.set_position(50, 190); // wider field below label
+
+        notes_label.set_position(50, 260);
+        notes_field.set_position(50, 290);
+
+        save_btn.set_position(180, 370);
+        back_btn.set_position(380, 370);
+        status_label.set_position(50, 430);
+
+        save_btn.set_on_click([this]()
+                              {
+            if (appt_id_field.get_text().isEmpty() || medicines_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Appointment ID and medicines are required.");
+                return;
+            }
+            // TODO: validate appt belongs to this doctor and status == "completed"
+            // TODO: check prescriptions.txt — if already exists → error
+            // TODO: FileHandler::append_prescription(appt_id, doctor_id, patient_id, date, medicines, notes)
+            status_label.set_color(sf::Color::Green);
+            status_label.set_text("Prescription saved. (stub)");
+            appt_id_field.clear();
+            medicines_field.clear();
+            notes_field.clear(); });
+
+        back_btn.set_on_click([this]()
+                              { UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id)); });
+    }
+
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
+        appt_id_field.handle_event(event, window);
+        medicines_field.handle_event(event, window);
+        notes_field.handle_event(event, window);
+        save_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow &window) override
+    {
+        heading.render(window);
+        appt_id_label.render(window);
+        appt_id_field.render(window);
+        medicines_label.render(window);
+        medicines_field.render(window);
+        notes_label.render(window);
+        notes_field.render(window);
+        save_btn.render(window);
+        back_btn.render(window);
+        status_label.render(window);
+    }
+};
+
+
+This is for patienthistoryscreen.hpp
+
+#pragma once
+#include "screen.hpp"
+#include "../components/label.hpp"
+#include "../components/color_label.hpp"
+#include "../components/button.hpp"
+#include "../components/text_field.hpp"
+#include "../components/ui_manager.hpp"
+#include "doctormenuscreen.hpp"
+#include "../../src/hospital_system.hpp"
+
+class PatientHistoryScreen : public Screen
+{
+private:
+    char doctor_id[64];
+
+    Label heading;
+    Label patient_id_label;
+    TextField patient_id_field;
+    Button search_btn;
+    Label records_list;
+    Button back_btn;
+    ColorLabel status_label;
+
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
+        std::size_t i = 0;
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
+        dst[i] = '\0';
+    }
+
+public:
+    PatientHistoryScreen(const char *did)
+        : heading("View Patient Medical History"),
+          patient_id_label("Patient ID:"),
+          search_btn("Search", 100, 40),
+          records_list(""),
+          back_btn("Back", 100, 40),
+          status_label("")
+    {
+        safe_copy(doctor_id, did, sizeof(doctor_id));
+
+        heading.set_position(50, 20);
+        patient_id_label.set_position(50, 90);
+        patient_id_field.set_position(180, 80);
+        search_btn.set_position(450, 80);
+        records_list.set_position(50, 140);
+        status_label.set_position(50, 500);
+        back_btn.set_position(50, 540);
+
+        search_btn.set_on_click([this]()
+                                {
+            if (patient_id_field.get_text().isEmpty()) {
+                status_label.set_color(sf::Color::Red);
+                status_label.set_text("Please enter a Patient ID.");
+                return;
+            }
+            // TODO: validate patient exists AND has at least one completed appt with this doctor
+            //       if not → "Access denied. You can only view records of your own patients."
+            // TODO: FileHandler::get_prescriptions_by_patient_and_doctor(patient_id, doctor_id, arr, count)
+            // Sort by date descending
+            // Build display string
+            records_list.set_text("Date        | Medicines              | Notes\n"
+                                  "---------------------------------------------\n"
+                                  "(records load from backend)");
+            status_label.set_color(sf::Color::White);
+            status_label.set_text(""); });
+
+        back_btn.set_on_click([this]()
+                              { UIManager::instance().set_screen(new DoctorMenuScreen(doctor_id)); });
+    }
+
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
+        patient_id_field.handle_event(event, window);
+        search_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
+    }
+
+    void update() override {}
+
+    void render(sf::RenderWindow &window) override
+    {
+        heading.render(window);
+        patient_id_label.render(window);
+        patient_id_field.render(window);
+        search_btn.render(window);
+        records_list.render(window);
+        status_label.render(window);
+        back_btn.render(window);
+    }
+};
