@@ -12,39 +12,41 @@
 //   - Total unpaid bills outstanding
 //   - New patients registered today
 // ─────────────────────────────────────────────────────────────────────────
-class DailyReportScreen : public Screen {
+class DailyReportScreen : public Screen
+{
 private:
-    Label      heading;
-    Label      divider;
-    Label      date_label;
-    Label      appt_heading;
-    Label      appt_stats;
-    Label      revenue_heading;
-    Label      revenue_stats;
-    Label      bills_heading;
-    Label      bills_stats;
-    Label      patients_heading;
-    Label      patients_stats;
+    Label heading;
+    Label divider;
+    Label date_label;
+    Label appt_heading;
+    Label appt_stats;
+    Label revenue_heading;
+    Label revenue_stats;
+    Label bills_heading;
+    Label bills_stats;
+    Label patients_heading;
+    Label patients_stats;
     ColorLabel status_label;
-    Button     back_btn;
+    Button back_btn;
 
-    void load() {
+    void load()
+    {
         // TODO: get today's date via time()/strftime() → char date_buf[16]
         // TODO: scan appointments.txt and count by status for today's date
         // TODO: sum fees of completed appointments today → revenue
         // TODO: count unpaid bills in bills.txt
         // TODO: count patients registered today in patients.txt
-        date_label.set_text     ("Report Date: DD-MM-YYYY  (stub)");
+        date_label.set_text("Report Date: DD-MM-YYYY  (stub)");
 
-        appt_stats.set_text     ("  Pending   : --\n"
-                                 "  Completed : --\n"
-                                 "  No-Show   : --\n"
-                                 "  Cancelled : --\n"
-                                 "  Total     : --");
+        appt_stats.set_text("  Pending   : --\n"
+                            "  Completed : --\n"
+                            "  No-Show   : --\n"
+                            "  Cancelled : --\n"
+                            "  Total     : --");
 
-        revenue_stats.set_text  ("  PKR ----  (stub)");
-        bills_stats.set_text    ("  Count: --   Total: PKR ----  (stub)");
-        patients_stats.set_text ("  New registrations today: --  (stub)");
+        revenue_stats.set_text("  PKR ----  (stub)");
+        bills_stats.set_text("  Count: --   Total: PKR ----  (stub)");
+        patients_stats.set_text("  New registrations today: --  (stub)");
     }
 
 public:
@@ -63,39 +65,40 @@ public:
           status_label(""),
           back_btn("Back", 100, 40)
     {
-        heading.set_position        (50,  20);
-        divider.set_position        (50,  48);
-        date_label.set_position     (50,  78);
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        date_label.set_position(50, 78);
 
-        appt_heading.set_position   (50, 115);
-        appt_stats.set_position     (50, 140);
+        appt_heading.set_position(50, 115);
+        appt_stats.set_position(50, 140);
 
         revenue_heading.set_position(50, 285);
-        revenue_stats.set_position  (50, 310);
+        revenue_stats.set_position(50, 310);
 
-        bills_heading.set_position  (50, 350);
-        bills_stats.set_position    (50, 375);
+        bills_heading.set_position(50, 350);
+        bills_stats.set_position(50, 375);
 
         patients_heading.set_position(50, 415);
-        patients_stats.set_position  (50, 440);
+        patients_stats.set_position(50, 440);
 
-        status_label.set_position   (50, 490);
-        back_btn.set_position       (50, 530);
+        status_label.set_position(50, 490);
+        back_btn.set_position(50, 530);
 
         load();
 
-        back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
-        });
+        back_btn.set_on_click([this]()
+                              { go_back(); });
     }
 
-    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
         back_btn.handle_event(event, window);
     }
 
     void update() override {}
 
-    void render(sf::RenderWindow& window) override {
+    void render(sf::RenderWindow &window) override
+    {
         heading.render(window);
         divider.render(window);
         date_label.render(window);
@@ -110,4 +113,6 @@ public:
         status_label.render(window);
         back_btn.render(window);
     }
+
+    void go_back();
 };

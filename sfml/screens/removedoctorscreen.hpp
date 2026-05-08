@@ -10,14 +10,15 @@
 // Admin enters a Doctor ID to remove. Cannot remove if doctor has any
 // pending (future) appointments.
 // ─────────────────────────────────────────────────────────────────────────
-class RemoveDoctorScreen : public Screen {
+class RemoveDoctorScreen : public Screen
+{
 private:
-    Label      heading;
-    Label      divider;
-    Label      doc_id_label;
-    TextField  doc_id_field;
-    Button     remove_btn;
-    Button     back_btn;
+    Label heading;
+    Label divider;
+    Label doc_id_label;
+    TextField doc_id_field;
+    Button remove_btn;
+    Button back_btn;
     ColorLabel status_label;
 
 public:
@@ -29,15 +30,16 @@ public:
           back_btn("Back", 100, 40),
           status_label("")
     {
-        heading.set_position    (50,  20);
-        divider.set_position    (50,  48);
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
         doc_id_label.set_position(50, 110);
         doc_id_field.set_position(200, 100);
-        remove_btn.set_position (160, 170);
-        back_btn.set_position   (340, 170);
+        remove_btn.set_position(160, 170);
+        back_btn.set_position(340, 170);
         status_label.set_position(50, 240);
 
-        remove_btn.set_on_click([this]() {
+        remove_btn.set_on_click([this]()
+                                {
             if (doc_id_field.get_text().isEmpty()) {
                 status_label.set_color(sf::Color::Red);
                 status_label.set_text("Please enter a Doctor ID.");
@@ -49,23 +51,23 @@ public:
             // TODO: FileHandler::remove_doctor(id, "doctors.txt")
             status_label.set_color(sf::Color::Green);
             status_label.set_text("Doctor removed successfully. (stub)");
-            doc_id_field.clear();
-        });
+            doc_id_field.clear(); });
 
-        back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
-        });
+        back_btn.set_on_click([this]()
+                              { go_back(); });
     }
 
-    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
         doc_id_field.handle_event(event, window);
-        remove_btn.handle_event  (event, window);
-        back_btn.handle_event    (event, window);
+        remove_btn.handle_event(event, window);
+        back_btn.handle_event(event, window);
     }
 
     void update() override {}
 
-    void render(sf::RenderWindow& window) override {
+    void render(sf::RenderWindow &window) override
+    {
         heading.render(window);
         divider.render(window);
         doc_id_label.render(window);
@@ -74,4 +76,5 @@ public:
         back_btn.render(window);
         status_label.render(window);
     }
+    void go_back();
 };

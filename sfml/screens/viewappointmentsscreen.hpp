@@ -1,6 +1,5 @@
 #pragma once
 #include "screen.hpp"
-#include "adminmenuscreen.hpp"
 #include "../components/label.hpp"
 #include "../components/color_label.hpp"
 #include "../components/button.hpp"
@@ -48,7 +47,7 @@ public:
         load();
 
         back_btn.set_on_click([this]()
-                              { UIManager::instance().set_screen(new AdminMenuScreen()); });
+                              { go_back(); });
     }
 
     void handle_event(sf::RenderWindow &window, const sf::Event &event) override
@@ -67,4 +66,5 @@ public:
         status_label.render(window);
         back_btn.render(window);
     }
+    void go_back();
 };

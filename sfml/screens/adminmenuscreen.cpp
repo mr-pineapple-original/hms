@@ -1,16 +1,15 @@
 #include "adminmenuscreen.hpp"
 #include "loginscreen.hpp"
-
-// Sub-screens — uncomment as you build each one
-// #include "admin/adddoctorscreen.hpp"
-// #include "admin/removedoctorscreen.hpp"
-// #include "admin/viewpatientsscreen.hpp"
-// #include "admin/viewdoctorsscreen.hpp"
-// #include "admin/viewappointmentsscreen.hpp"
-// #include "admin/unpaidbillsscreen.hpp"
-// #include "admin/dischargepatientscreen.hpp"
-// #include "admin/securitylogscreen.hpp"
-// #include "admin/dailyreportscreen.hpp"
+#include "loginscreen.hpp"
+#include "adddoctorscreen.hpp"
+#include "removedoctorscreen.hpp"
+#include "viewpatientsscreen.hpp"
+#include "viewdoctorsscreen.hpp"
+#include "viewappointmentsscreen.hpp"
+#include "unpaidbillsscreen.hpp"
+#include "dischargepatientscreen.hpp"
+#include "securitylogscreen.hpp"
+#include "dailyreportscreen.hpp"
 
 AdminMenuScreen::AdminMenuScreen()
     : heading_label("Admin Panel -- MediCore"),
@@ -54,48 +53,39 @@ AdminMenuScreen::AdminMenuScreen()
     // ── Button handlers ───────────────────────────────────────────────────
 
     add_doctor_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Add Doctor...");
-        // TODO: UIManager::instance().set_screen(new AddDoctorScreen());
+       UIManager::instance().set_screen(new AddDoctorScreen());
     });
 
     remove_doctor_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Remove Doctor...");
-        // TODO: UIManager::instance().set_screen(new RemoveDoctorScreen());
+        UIManager::instance().set_screen(new RemoveDoctorScreen());
     });
 
     view_patients_btn.set_on_click([this]() {
-        status_label.set_text("Opening: View All Patients...");
-        // TODO: UIManager::instance().set_screen(new ViewPatientsScreen());
+        UIManager::instance().set_screen(new ViewPatientsScreen());
     });
 
     view_doctors_btn.set_on_click([this]() {
-        status_label.set_text("Opening: View All Doctors...");
-        // TODO: UIManager::instance().set_screen(new ViewDoctorsScreen());
+        UIManager::instance().set_screen(new ViewDoctorsScreen());
     });
 
     view_appts_btn.set_on_click([this]() {
-        status_label.set_text("Opening: View All Appointments...");
-        // TODO: UIManager::instance().set_screen(new ViewAppointmentsScreen());
+        UIManager::instance().set_screen(new ViewAppointmentsScreen());
     });
 
     unpaid_bills_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Unpaid Bills...");
-        // TODO: UIManager::instance().set_screen(new UnpaidBillsScreen());
+        UIManager::instance().set_screen(new UnpaidBillsScreen());
     });
 
     discharge_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Discharge Patient...");
-        // TODO: UIManager::instance().set_screen(new DischargePatientScreen());
+        UIManager::instance().set_screen(new DischargePatientScreen());
     });
 
     security_log_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Security Log...");
-        // TODO: UIManager::instance().set_screen(new SecurityLogScreen());
+        UIManager::instance().set_screen(new SecurityLogScreen());
     });
 
     daily_report_btn.set_on_click([this]() {
-        status_label.set_text("Opening: Daily Report...");
-        // TODO: UIManager::instance().set_screen(new DailyReportScreen());
+        UIManager::instance().set_screen(new DailyReportScreen());
     });
 
     logout_btn.set_on_click([this]() {

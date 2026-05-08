@@ -41,7 +41,15 @@ add_executable(apphms
     sfml/screens/adminmenuscreen.cpp
     sfml/screens/doctormenuscreen.cpp
     sfml/screens/patientmenuscreen.cpp
-    
+    sfml/screens/adddoctorscreen.cpp
+    sfml/screens/removedoctorscreen.cpp
+    sfml/screens/viewpatientsscreen.cpp
+    sfml/screens/viewdoctorsscreen.cpp
+    sfml/screens/viewappointmentsscreen.cpp
+    sfml/screens/unpaidbillsscreen.cpp
+    sfml/screens/dischargepatientscreen.cpp
+    sfml/screens/securitylogscreen.cpp
+    sfml/screens/dailyreportscreen.cpp
 )
 
 target_include_directories(apphms PRIVATE

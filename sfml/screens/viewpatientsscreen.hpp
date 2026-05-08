@@ -8,16 +8,18 @@
 // ── ViewPatientsScreen ────────────────────────────────────────────────────
 // Loads and displays all patients from patients.txt.
 // ─────────────────────────────────────────────────────────────────────────
-class ViewPatientsScreen : public Screen {
+class ViewPatientsScreen : public Screen
+{
 private:
-    Label      heading;
-    Label      divider;
-    Label      col_header;
-    Label      patient_list;
+    Label heading;
+    Label divider;
+    Label col_header;
+    Label patient_list;
     ColorLabel status_label;
-    Button     back_btn;
+    Button back_btn;
 
-    void load() {
+    void load()
+    {
         // TODO: FileHandler::get_all_patients("patients.txt", arr, count)
         // Build display: ID | Name | Age | Gender | Contact | Balance
         col_header.set_text("ID  | Name            | Age | Gender | Contact     | Balance (PKR)");
@@ -34,27 +36,28 @@ public:
           status_label(""),
           back_btn("Back", 100, 40)
     {
-        heading.set_position     (50,  20);
-        divider.set_position     (50,  48);
-        col_header.set_position  (50,  80);
+        heading.set_position(50, 20);
+        divider.set_position(50, 48);
+        col_header.set_position(50, 80);
         patient_list.set_position(50, 108);
         status_label.set_position(50, 500);
-        back_btn.set_position    (50, 540);
+        back_btn.set_position(50, 540);
 
         load();
 
-        back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new AdminMenuScreen());
-        });
+        back_btn.set_on_click([this]()
+                              { go_back(); });
     }
 
-    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
         back_btn.handle_event(event, window);
     }
 
     void update() override {}
 
-    void render(sf::RenderWindow& window) override {
+    void render(sf::RenderWindow &window) override
+    {
         heading.render(window);
         divider.render(window);
         col_header.render(window);
@@ -62,4 +65,6 @@ public:
         status_label.render(window);
         back_btn.render(window);
     }
+
+    void go_back();
 };
