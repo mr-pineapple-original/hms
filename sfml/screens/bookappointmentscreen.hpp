@@ -222,7 +222,19 @@
 #include "../../src/hospital_system.hpp"
 #include "../../src/patient.hpp"
 #include "../../src/file_handler.hpp"
- 
+
+
+
+// Helper function 
+
+static bool is_valid_slot(const char* slot) {
+    const char* valid_slots[] = {"09:00","10:00","11:00","12:00","13:00","14:00","15:00","16:00"};
+    for (int i = 0; i < 8; i++)
+        if (is_char_arrays_equal(slot, valid_slots[i])) return true;
+    return false;
+}
+
+
 class BookAppointmentScreen : public Screen {
 private:
     char patient_id[64];
@@ -418,7 +430,13 @@ public:
                     return;
                 }
             }
- 
+            
+            if (!is_valid_slot(slot_buf)) {
+    status_label.set_color(sf::Color::Red);
+    status_label.set_text("Invalid slot. Use 09:00, 10:00, 11:00, 12:00, 13:00, 14:00, 15:00, or 16:00.");
+    return;
+}
+
             // Deduct fee using -= operator
             *ptr_p -= ptr_d->get_fee();
  
