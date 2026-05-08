@@ -1,5 +1,6 @@
 #pragma once
 #include "screen.hpp"
+#include "logindialog.hpp"
 #include "../components/label.hpp"
 #include "../components/color_label.hpp"
 #include "../components/button.hpp"
@@ -69,7 +70,7 @@ public:
         });
  
         back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new LoginScreen());
+            UIManager::instance().set_screen(new LoginDialog(PATIENT));
         });
     }
  

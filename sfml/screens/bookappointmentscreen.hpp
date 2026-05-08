@@ -12,47 +12,53 @@
 // All backend calls are stubbed with // TODO comments.
 // ─────────────────────────────────────────────────────────────────────────
 
-class BookAppointmentScreen : public Screen {
+class BookAppointmentScreen : public Screen
+{
 private:
     char patient_id[64];
 
     // ── Header ────────────────────────────────────────────────────────────
-    Label  heading;
-    Label  divider;
+    Label heading;
+    Label divider;
 
     // ── Step 1: specialization search ────────────────────────────────────
-    Label      spec_label;
-    TextField  spec_field;
-    Button     search_btn;
+    Label spec_label;
+    TextField spec_field;
+    Button search_btn;
 
     // ── Step 2: doctor ID ─────────────────────────────────────────────────
-    Label      doc_id_label;
-    TextField  doc_id_field;
+    Label doc_id_label;
+    TextField doc_id_field;
 
     // ── Step 3: date ──────────────────────────────────────────────────────
-    Label      date_label;
-    TextField  date_field;        // DD-MM-YYYY
+    Label date_label;
+    TextField date_field; // DD-MM-YYYY
 
     // ── Step 4: time slot ─────────────────────────────────────────────────
-    Label      slot_label;
-    TextField  slot_field;        // e.g. 09:00
+    Label slot_label;
+    TextField slot_field; // e.g. 09:00
 
     // ── Actions ───────────────────────────────────────────────────────────
-    Button     book_btn;
-    Button     back_btn;
+    Button book_btn;
+    Button back_btn;
 
     // ── Feedback ──────────────────────────────────────────────────────────
-    ColorLabel status_label;      // red for errors, green for success
-    Label      results_label;     // shows doctor list after search
+    ColorLabel status_label; // red for errors, green for success
+    Label results_label;     // shows doctor list after search
 
-    static void safe_copy(char* dst, const char* src, std::size_t max) {
+    static void safe_copy(char *dst, const char *src, std::size_t max)
+    {
         std::size_t i = 0;
-        while (i < max - 1 && src[i] != '\0') { dst[i] = src[i]; ++i; }
+        while (i < max - 1 && src[i] != '\0')
+        {
+            dst[i] = src[i];
+            ++i;
+        }
         dst[i] = '\0';
     }
 
 public:
-    BookAppointmentScreen(const char* pid)
+    BookAppointmentScreen(const char *pid)
         : heading("Book Appointment"),
           divider("=============================="),
           spec_label("Specialization:"),
@@ -100,7 +106,8 @@ public:
 
         // ── Handlers ──────────────────────────────────────────────────────
 
-        search_btn.set_on_click([this]() {
+        search_btn.set_on_click([this]()
+                                {
             status_label.set_color(sf::Color::White);
             status_label.set_text("Searching...");
             results_label.set_text("");
@@ -124,10 +131,10 @@ public:
                                    "-----------------------------------\n"
                                    "(results will appear here after backend integration)");
             status_label.set_color(sf::Color::White);
-            status_label.set_text("Doctors loaded. Enter Doctor ID below.");
-        });
+            status_label.set_text("Doctors loaded. Enter Doctor ID below."); });
 
-        book_btn.set_on_click([this]() {
+        book_btn.set_on_click([this]()
+                              {
             sf::String doc_input  = doc_id_field.get_text();
             sf::String date_input = date_field.get_text();
             sf::String slot_input = slot_field.get_text();
@@ -150,16 +157,27 @@ public:
 
             // Stub success
             status_label.set_color(sf::Color::Green);
-            status_label.set_text("Appointment booked successfully. (stub)");
-        });
+            status_label.set_text("Appointment booked successfully. (stub)"); });
 
-        back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
-            UIManager::instance().set_screen(nullptr); // replace with correct screen
-        });
+        back_btn.set_on_click([this]()
+                              {
+    // We need to reload patient data to get updated balance
+    int pid = 0;
+    for (int i = 0; patient_id[i] != '\0'; i++)
+        pid = pid * 10 + (patient_id[i] - '0');
+
+    Patient* ptr_p = HospitalSystem::instance().get_patients().find(pid);
+    if (ptr_p != nullptr)
+        UIManager::instance().set_screen(
+            new PatientMenuScreen(patient_id,
+                                  ptr_p->get_name(),
+                                  ptr_p->get_balance()));
+    else
+        UIManager::instance().set_screen(new LoginScreen()); });
     }
 
-    void handle_event(sf::RenderWindow& window, const sf::Event& event) override {
+    void handle_event(sf::RenderWindow &window, const sf::Event &event) override
+    {
         spec_field.handle_event(event, window);
         doc_id_field.handle_event(event, window);
         date_field.handle_event(event, window);
@@ -171,7 +189,8 @@ public:
 
     void update() override {}
 
-    void render(sf::RenderWindow& window) override {
+    void render(sf::RenderWindow &window) override
+    {
         heading.render(window);
         divider.render(window);
         spec_label.render(window);

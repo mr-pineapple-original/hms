@@ -4,13 +4,17 @@
 #include "../components/color_label.hpp"
 #include "../components/button.hpp"
 #include "../components/ui_manager.hpp"
- 
-// ── ViewBillsScreen ───────────────────────────────────────────────────────
+#include "patientmenuscreen.hpp"
+#include "loginscreen.hpp"
+#include "../../src/hospital_system.hpp"
+#include "../../src/patient.hpp"
+
+// ── PayBillsScreen ───────────────────────────────────────────────────────
 // Shows all bills for this patient + total outstanding unpaid amount.
 // TODO: connect to FileHandler::get_bills_by_patient(...)
 // ─────────────────────────────────────────────────────────────────────────
  
-class ViewBillsScreen : public Screen {
+class PayBillsScreen : public Screen {
 private:
     char patient_id[64];
  
@@ -38,7 +42,7 @@ private:
     }
  
 public:
-    ViewBillsScreen(const char* pid)
+    PayBillsScreen(const char* pid)
         : heading("My Bills"),
           divider("===================="),
           bills_list(""),
@@ -58,7 +62,19 @@ public:
         load();
  
         back_btn.set_on_click([this]() {
-            // TODO: UIManager::instance().set_screen(new PatientMenuScreen(patient_id));
+            // We need to reload patient data to get updated balance
+        int pid = 0;
+        for (int i = 0; patient_id[i] != '\0'; i++)
+        pid = pid * 10 + (patient_id[i] - '0');
+
+    Patient* ptr_p = HospitalSystem::instance().get_patients().find(pid);
+    if (ptr_p != nullptr)
+        UIManager::instance().set_screen(
+            new PatientMenuScreen(patient_id,
+                                  ptr_p->get_name(),
+                                  ptr_p->get_balance()));
+    else
+        UIManager::instance().set_screen(new LoginScreen());
         });
     }
  
