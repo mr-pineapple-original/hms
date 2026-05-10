@@ -3,13 +3,13 @@
 Enter cool description here
 
 
-
+Just do ./run.sh in the vscode terminal to run.
 ## Features
 
 As told in pdf :3
 
 ## GitHub Repository
-https://github.com/mr-pineapple-original/hms
+https://github.com/harisshazad2397-oss/hms-oop-proj
 
 ## Prerequisites
 
